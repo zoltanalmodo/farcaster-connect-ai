@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAccount, useWalletClient } from 'wagmi';
 import { ethers } from 'ethers';
 import { initXMTP } from '../lib/xmtp';
 
@@ -12,33 +13,49 @@ export default function MessageComposer() {
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('');
 
+  const { address, isConnected } = useAccount();
+  const { data: walletClient } = useWalletClient();
+
+  useEffect(() => {
+    if (!isConnected || !walletClient) {
+      console.log('🛑 Wallet not connected.');
+      return;
+    }
+
+    console.log('✅ Wallet connected:', address);
+  }, [isConnected, walletClient, address]);
+
   const handleSend = async () => {
     try {
       if (!message) return;
 
-      // 🛡️ Guard for missing wallet
       if (!window.ethereum) {
         alert('Please install MetaMask or another Ethereum wallet.');
         return;
       }
 
-      setStatus('Connecting wallet...');
-      const provider = new ethers.providers.Web3Provider(window.ethereum); // ✅ ethers v5 correct class
-      const signer = provider.getSigner(); // ✅ no await in v5
+      if (!walletClient) {
+        alert('Wallet not connected.');
+        return;
+      }
 
+      const provider = new ethers.providers.Web3Provider(window.ethereum);
+      const signer = provider.getSigner();
+
+      setStatus('Creating XMTP client...');
       const xmtp = await initXMTP(signer);
 
-      setStatus('Creating conversation...');
+      setStatus('Starting new conversation...');
       const conversation = await xmtp.conversations.newConversation(
-        '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' // XMTP test address — replace later
+        '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
       );
 
       await conversation.send(message);
       setMessage('');
-      setStatus('Message sent!');
+      setStatus('✅ Message sent!');
     } catch (err) {
       console.error(err);
-      setStatus('❌ Error sending message. Check console.');
+      setStatus('❌ Error sending message. See console.');
     }
   };
 
