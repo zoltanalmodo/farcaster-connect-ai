@@ -17,20 +17,20 @@ export default function MessageComposer() {
       if (!message) return;
 
       // 🛡️ Guard for missing wallet
-    if (!window.ethereum) {
-      alert("Please install MetaMask or another Ethereum wallet.");
-      return;
-    }
+      if (!window.ethereum) {
+        alert('Please install MetaMask or another Ethereum wallet.');
+        return;
+      }
 
       setStatus('Connecting wallet...');
-      const provider = new ethers.BrowserProvider(window.ethereum);
-      const signer = await provider.getSigner();
+      const provider = new ethers.providers.Web3Provider(window.ethereum); // ✅ ethers v5 correct class
+      const signer = provider.getSigner(); // ✅ no await in v5
 
       const xmtp = await initXMTP(signer);
 
       setStatus('Creating conversation...');
       const conversation = await xmtp.conversations.newConversation(
-        '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'// 👈 XMTP test address - Replace with real address LATER !
+        '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266' // XMTP test address — replace later
       );
 
       await conversation.send(message);
@@ -38,7 +38,7 @@ export default function MessageComposer() {
       setStatus('Message sent!');
     } catch (err) {
       console.error(err);
-      setStatus('Error sending message');
+      setStatus('❌ Error sending message. Check console.');
     }
   };
 
@@ -50,7 +50,10 @@ export default function MessageComposer() {
         placeholder="Write your message..."
         className="w-full p-2 border rounded"
       />
-      <button onClick={handleSend} className="mt-2 px-4 py-2 bg-blue-600 text-white rounded">
+      <button
+        onClick={handleSend}
+        className="mt-2 px-4 py-2 bg-blue-600 text-white rounded"
+      >
         Send
       </button>
       <div className="mt-2 text-sm text-gray-600">{status}</div>

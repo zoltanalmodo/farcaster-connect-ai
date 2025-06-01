@@ -12,6 +12,7 @@
     "@rainbow-me/rainbowkit": "^2.2.5",
     "@tanstack/react-query": "^5.20.1",
     "@wagmi/core": "^2.17.2",
+    "@xmtp/xmtp-js": "^13.0.4",
     "ethers": "^5.7.2",
     "next": "^13.4.12",
     "react": "^18.2.0",
