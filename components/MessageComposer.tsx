@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAccount, useWalletClient } from 'wagmi';
+import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { ethers } from 'ethers';
 import { initXMTP } from '../lib/xmtp';
 
@@ -61,11 +62,13 @@ export default function MessageComposer() {
 
   return (
     <div className="mb-6">
+      <ConnectButton />
+      
       <textarea
         value={message}
         onChange={(e) => setMessage(e.target.value)}
         placeholder="Write your message..."
-        className="w-full p-2 border rounded"
+        className="w-full p-2 border rounded mt-4"
       />
       <button
         onClick={handleSend}
