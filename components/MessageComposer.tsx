@@ -29,7 +29,7 @@ export default function MessageComposer() {
 
   const handleSend = async () => {
     try {
-      if (!message) return;
+      if (!message.trim()) return;
 
       if (!window.ethereum) {
         alert('Please install MetaMask or another Ethereum wallet.');
@@ -52,7 +52,9 @@ export default function MessageComposer() {
         '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'
       );
 
-      await conversation.send(message);
+      const sentMsg = await conversation.send(message);
+      console.log('📤 XMTP message sent:', sentMsg);
+
       setMessage('');
       setStatus('✅ Message sent!');
     } catch (err) {
@@ -93,13 +95,15 @@ export default function MessageComposer() {
       <div className="flex gap-2 mt-2">
         <button
           onClick={handleSend}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
+          disabled={!message.trim()}
+          className="px-4 py-2 bg-blue-600 text-white rounded disabled:opacity-50"
         >
           Send
         </button>
         <button
           onClick={handleGetSuggestion}
-          className="px-4 py-2 bg-purple-600 text-white rounded"
+          disabled={!message.trim()}
+          className="px-4 py-2 bg-purple-600 text-white rounded disabled:opacity-50"
         >
           Suggest
         </button>
