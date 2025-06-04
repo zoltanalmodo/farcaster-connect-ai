@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-const RECIPIENT_ADDRESS = '0x0832CE6C215B079e665b99cB1F27C9A2d4E0226B1'
+const RECIPIENT_ADDRESS = '0x0832CE6C215B079e665b99cB1F27C9A2d4E0226B'
 // TEST = SEND  Meta-Mask address = '0x4744e5abf3cbf93d059e2ec4de31df1b2de81249';
 // TEST = REPLY Meta-Mask address = '0x0832CE6C215B079e665b99cB1F27C9A2d4E0226B'
 // // change to your test partner
