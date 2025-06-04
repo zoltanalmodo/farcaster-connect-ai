@@ -15,13 +15,14 @@
     "@xmtp/xmtp-js": "^13.0.4",
     "ethers": "^5.7.2",
     "next": "^13.4.12",
+    "openai": "^5.1.0",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "viem": "^2.7.15",
     "wagmi": "^2.15.4"
   },
   "devDependencies": {
-    "@types/node": "22.15.29",
+    "@types/node": "^22.15.29",
     "@types/react": "19.1.6",
     "autoprefixer": "^10.4.17",
     "eslint": "8.42.0",
