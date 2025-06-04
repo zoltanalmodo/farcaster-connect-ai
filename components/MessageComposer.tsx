@@ -10,7 +10,7 @@ declare global {
   }
 }
 
-const RECIPIENT_ADDRESS = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'; // change to your test partner
+const RECIPIENT_ADDRESS = '0x4744e5abF3cbF93d059e2ec4de31DF1B2de81249'; // change to your test partner
 
 export default function MessageComposer() {
   const [message, setMessage] = useState('');
