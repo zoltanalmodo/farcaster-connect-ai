@@ -13,7 +13,6 @@ declare global {
 const RECIPIENT_ADDRESS = '0x0832CE6C215B079e665b99cB1F27C9A2d4E0226B'
 // TEST = SEND  Meta-Mask address = '0x4744e5abf3cbf93d059e2ec4de31df1b2de81249';
 // TEST = REPLY Meta-Mask address = '0x0832CE6C215B079e665b99cB1F27C9A2d4E0226B'
-// // change to your test partner
 
 export default function MessageComposer() {
   const [message, setMessage] = useState('');
@@ -39,10 +38,20 @@ export default function MessageComposer() {
 
       const provider = new ethers.providers.Web3Provider(window.ethereum);
       const signer = provider.getSigner();
+
       setStatus('Creating XMTP client...');
       const xmtp = await initXMTP(signer);
 
-      const conversation = await xmtp.conversations.newConversation(RECIPIENT_ADDRESS);
+      const recipientAddressLower = RECIPIENT_ADDRESS.toLowerCase();
+      const canMessage = await xmtp.canMessage(recipientAddressLower);
+      console.log('✅ Can message recipient:', canMessage);
+
+      if (!canMessage) {
+        setStatus('❌ Recipient not registered on XMTP.');
+        return;
+      }
+
+      const conversation = await xmtp.conversations.newConversation(recipientAddressLower);
       await conversation.send(message);
       setStatus('✅ Message sent! Waiting for reply...');
       setMessage('');
@@ -55,9 +64,8 @@ export default function MessageComposer() {
           console.log('📩 Received reply:', msg.content);
           setLastReceivedMessage(msg.content || '');
           setStatus('📩 Reply received. Click Suggest to get AI help.');
-          break; // stop after first reply
+          break;
         }
-
       }
     } catch (err) {
       console.error(err);
