@@ -13,7 +13,7 @@ export default function Suggestions() {
     const res = await fetch('/api/ask', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ prompt })
+      body: JSON.stringify({ prompt }),
     });
 
     const data = await res.json();
@@ -22,18 +22,14 @@ export default function Suggestions() {
   };
 
   return (
-    <div>
-      <h2 className="text-xl font-semibold mb-2">AI Suggestions</h2>
-      <button
-        onClick={fetchSuggestion}
-        className="mb-4 px-4 py-2 bg-purple-600 text-white rounded"
-        disabled={loading}
-      >
-        {loading ? 'Thinking...' : 'Get Suggestion'}
-      </button>
-      <div className="whitespace-pre-wrap bg-gray-100 p-4 rounded">
-        {suggestion}
+    <div className="suggestion-box">
+      <div className="suggestion-title">AI Suggestions</div>
+      <div className="suggestion-button">
+        <button onClick={fetchSuggestion} disabled={loading}>
+          {loading ? 'Thinking...' : 'Get Suggestion'}
+        </button>
       </div>
+      <div className="suggestion-output">{suggestion}</div>
     </div>
   );
 }

@@ -1,5 +1,137 @@
+/* === Base Styling === */
 body {
   font-family: sans-serif;
   margin: 0;
   padding: 0;
+}
+
+/* === Chat Wrapper === */
+.chat-wrapper {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 1rem;
+}
+
+/* === Title === */
+.chat-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 0.5rem;
+}
+
+/* === Chat Window === */
+.chat-window {
+  border: 4px solid red;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #fff;
+}
+
+/* === Message Area === */
+.chat-messages {
+  height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+/* === Message Bubbles === */
+.chat-bubble {
+  padding: 0.5rem 1rem;
+  border-radius: 1rem;
+  max-width: 75%;
+  word-break: break-word;
+}
+
+.chat-bubble.sender {
+  background-color: #3b82f6;
+  color: white;
+  align-self: flex-end;
+}
+
+.chat-bubble.receiver {
+  background-color: #e5e7eb;
+  color: black;
+  align-self: flex-start;
+}
+
+/* === Input + Button Area === */
+.chat-controls {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.chat-input {
+  width: 100%;
+  padding: 0.5rem;
+  border-radius: 6px;
+  border: 1px solid #ccc;
+  resize: none;
+}
+
+.chat-buttons {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.chat-buttons button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  background-color: #3b82f6;
+  color: white;
+}
+
+.chat-buttons button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* === Status Message === */
+.chat-status {
+  margin-top: 1rem;
+  font-size: 0.9rem;
+  color: gray;
+}
+
+
+.suggestion-box {
+  border: 4px solid blue;
+  border-radius: 12px;
+  padding: 1rem;
+  background: #eef6ff;
+  max-width: 600px;
+  margin: 1rem auto 2rem auto; /* spacing above and below */
+}
+
+.suggestion-title {
+  font-size: 1.5rem;
+  font-weight: bold;
+  margin-bottom: 1rem;
+}
+
+.suggestion-output {
+  margin-top: 1rem;
+  background: #dbeafe;
+  padding: 0.75rem;
+  border-radius: 8px;
+  min-height: 32px;
+}
+
+.suggestion-button {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.suggestion-button button {
+  padding: 0.5rem 1rem;
+  border: none;
+  border-radius: 6px;
+  background-color: #3b82f6;
+  color: white;
+  cursor: pointer;
 }
