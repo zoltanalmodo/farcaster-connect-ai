@@ -36,11 +36,9 @@ export default function ChatWindow() {
 
       const conversation = existing ?? await xmtp.conversations.newConversation(recipient);
 
-      // ✅ Load message history once
       const pastMessages = await conversation.messages();
       setMessages(pastMessages);
 
-      // ✅ Stream new messages
       for await (const msg of await conversation.streamMessages()) {
         setMessages((prev) => {
           const exists = prev.some((m) => m.id === msg.id);
@@ -73,13 +71,10 @@ export default function ChatWindow() {
   };
 
   return (
-    <div className="chat-wrapper">
-      <div className="chat-title">Farcaster Connect AI</div>
-
+    <>
       <ConnectButton />
 
       <div className="chat-window">
-        {/* CHAT HISTORY */}
         <div className="chat-messages">
           {messages.map((msg, idx) => {
             const isSender = msg.senderAddress === address;
@@ -95,7 +90,6 @@ export default function ChatWindow() {
           <div ref={chatEndRef} />
         </div>
 
-        {/* INPUT + BUTTONS */}
         <div className="chat-controls">
           <textarea
             className="chat-input"
@@ -112,6 +106,6 @@ export default function ChatWindow() {
 
         {status && <div className="chat-status">{status}</div>}
       </div>
-    </div>
+    </>
   );
 }
