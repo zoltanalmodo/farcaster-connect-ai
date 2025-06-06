@@ -4,7 +4,7 @@ import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY, // ensure in .env.local
+  apiKey: process.env.OPENAI_API_KEY,
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -15,44 +15,37 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   }
 
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo',
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo', // ✅ changed from gpt-4
+      temperature: 0.8,
       messages: [
         {
           role: 'system',
-          content:
-            "You are an assistant that helps generate conversation replies. You are helpful, insightful, and mindful of relationship dynamics. Return 1–3 brief replies with a short explanation of tone/intention for each.",
+          content: `You are an assistant that helps users craft thoughtful messages based on relationship goals and recent chats.
+Return 1–3 message suggestions. Each should include a short reason (tone, intention, etc.).
+Respond in JSON format:
+{ "suggestions": [ { "text": "message", "reason": "why it's good" }, ... ] }`,
         },
         {
           role: 'user',
           content: message,
         },
       ],
-      temperature: 0.7,
     });
 
-    const aiReply = response.choices[0].message?.content;
+    const raw = completion.choices[0].message?.content || '';
 
-    // Try to parse multiple suggestions from one message (if in list format)
-    let suggestions: { text: string; reason: string }[] = [];
-
-    const regex = /(\d+)[\).\s-]+(.+?)\s*-\s*(.*?)(?=\n\d|$)/gs;
-    let match;
-    while ((match = regex.exec(aiReply || '')) !== null) {
-      suggestions.push({
-        text: match[2].trim(),
-        reason: match[3].trim(),
-      });
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (err) {
+      console.error('Failed to parse OpenAI JSON:', raw);
+      return res.status(500).json({ error: 'Invalid JSON from AI', raw });
     }
 
-    // fallback if parsing failed
-    if (suggestions.length === 0 && aiReply) {
-      suggestions.push({ text: aiReply.trim(), reason: 'General response' });
-    }
-
-    res.status(200).json({ suggestions });
+    res.status(200).json(parsed);
   } catch (err: any) {
-    console.error(err);
-    res.status(500).json({ error: 'Failed to generate suggestions' });
+    console.error('OpenAI request failed:', err);
+    res.status(500).json({ error: 'OpenAI request failed' });
   }
 }

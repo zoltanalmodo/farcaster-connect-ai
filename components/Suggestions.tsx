@@ -8,12 +8,14 @@ interface Suggestion {
 export default function Suggestions() {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
+  const [error, setError] = useState('');
 
   const fetchSuggestions = async () => {
     setLoading(true);
+    setError('');
     setSuggestions([]);
 
-    // Example placeholder context — replace with real chat + notes
+    // Replace this with real chat + notes state later
     const context = `
 Recent chat messages:
 - They said they're excited about next week's NFT drop.
@@ -30,17 +32,29 @@ I’d like to build a real friendship and maybe even explore a joint NFT idea.
 Would love to support them when they’re stressed.
 
 What’s a good message to send next?
-`;
+    `;
 
-    const res = await fetch('/api/suggest', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: context }),
-    });
+    try {
+      const res = await fetch('/api/suggest', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message: context }),
+      });
 
-    const data = await res.json();
-    setSuggestions(data.suggestions || []);
-    setLoading(false);
+      const data = await res.json();
+
+      if (!res.ok) {
+        setError(data.error || 'Something went wrong.');
+        return;
+      }
+
+      setSuggestions(data.suggestions || []);
+    } catch (err) {
+      console.error('Suggestion fetch error:', err);
+      setError('Failed to fetch suggestions.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -54,7 +68,8 @@ What’s a good message to send next?
       </div>
 
       <div className="suggestion-output">
-        {suggestions.length === 0 && !loading && <p>No suggestions yet.</p>}
+        {error && <p style={{ color: 'red' }}>⚠️ {error}</p>}
+        {!error && suggestions.length === 0 && !loading && <p>No suggestions yet.</p>}
 
         {suggestions.map((s, index) => (
           <div key={index} style={{ marginBottom: '1rem' }}>
