@@ -72,7 +72,6 @@ export default function ChatWindow() {
 
   return (
     <>
-      <ConnectButton />
 
       <div className="chat-window">
         <div className="chat-messages">
