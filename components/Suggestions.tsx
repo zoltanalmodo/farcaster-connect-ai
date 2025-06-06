@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 
 interface Suggestion {
   text: string;
@@ -17,6 +17,15 @@ export default function Suggestions() {
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [customInstruction, setCustomInstruction] = useState(defaultInstruction);
   const [showCustom, setShowCustom] = useState(false);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  // Auto-resize on initial render and update
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
+    }
+  }, [customInstruction, showCustom]);
 
   const fetchSuggestions = async () => {
     setLoading(true);
@@ -55,17 +64,27 @@ What’s a good message to send next?
     setLoading(false);
   };
 
+  const handleInstructionChange = (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+    setCustomInstruction(e.target.value);
+  };
+
   return (
     <div className={`suggestion-box ${showCustom ? 'purple-box' : 'blue-box'}`}>
-      <div className="suggestion-title">AI Suggestions</div>
+      <div className="suggestion-title">
+        {showCustom ? 'Refine AI' : 'AI Suggestions'}
+      </div>
 
-      <div className="suggestion-controls">
-        <button className="get-button" onClick={fetchSuggestions} disabled={loading}>
-          {loading ? 'Thinking...' : 'Get Suggestions'}
-        </button>
-
-        <button className="refine-button" onClick={() => setShowCustom((prev) => !prev)}>
-          {showCustom ? 'Back to Suggestions' : 'Refine AI'}
+      <div className="suggestion-controls" style={{ display: 'flex', gap: '1rem' }}>
+        {!showCustom && (
+          <button className="get-button" onClick={fetchSuggestions} disabled={loading}>
+            {loading ? 'Thinking...' : 'Get Suggestions'}
+          </button>
+        )}
+        <button
+          className="refine-button"
+          onClick={() => setShowCustom((prev) => !prev)}
+        >
+          {showCustom ? 'Done' : 'Refine AI'}
         </button>
       </div>
 
@@ -76,14 +95,28 @@ What’s a good message to send next?
           </label>
           <textarea
             id="instruction"
+            ref={textareaRef}
             value={customInstruction}
-            onChange={(e) => setCustomInstruction(e.target.value)}
-            rows={10}
-            style={{ width: '100%', marginTop: '0.5rem' }}
+            onChange={handleInstructionChange}
+            placeholder="Enter your own AI prompt..."
+            style={{
+              width: '100%',
+              marginTop: '0.5rem',
+              resize: 'none',
+              overflow: 'hidden',
+              padding: '0.75rem',
+              borderRadius: '12px',
+              border: '1px solid #ccc',
+              fontFamily: 'inherit',
+              fontSize: '1rem',
+              boxSizing: 'border-box',
+              lineHeight: '1.4',
+              whiteSpace: 'pre-wrap'
+            }}
           />
         </div>
       ) : (
-        <div className="suggestion-output">
+        <div className="suggestion-output" style={{ marginTop: '1rem' }}>
           {suggestions.length === 0 && !loading && <p>No suggestions yet.</p>}
           {suggestions.map((s, index) => (
             <div key={index} style={{ marginBottom: '1rem' }}>
