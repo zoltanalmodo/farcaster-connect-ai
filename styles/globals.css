@@ -181,17 +181,28 @@ body {
 
 .toggle-button-wrapper {
   display: flex;
-  justify-content: center;
-  margin-bottom: 1rem;
+  justify-content: flex-end;
+  max-width: 600px;
+  margin: 0 auto 1rem auto;
 }
 
 .toggle-button {
-  padding: 0.5rem 1rem;
-  background-color: #22c55e; /* green */
-  color: white;
+  padding: 0.5rem 1.25rem;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 9999px; /* full rounded like RainbowKit */
   border: none;
-  border-radius: 6px;
-  font-weight: bold;
+  color: white;
   cursor: pointer;
+  transition: background-color 0.2s ease;
 }
+
+.toggle-button.notes {
+  background-color: #22c55e; /* green */
+}
+
+.toggle-button.chat {
+  background-color: #ef4444; /* red */
+}
+
 

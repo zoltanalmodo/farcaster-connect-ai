@@ -20,12 +20,13 @@ export default function Home() {
       {/* TOGGLE BUTTON */}
       <div className="toggle-button-wrapper">
         <button
-          className="toggle-button"
+          className={`toggle-button ${showNotes ? 'chat' : 'notes'}`}
           onClick={() => setShowNotes((prev) => !prev)}
         >
           {showNotes ? 'Show Chat' : 'Show Notes'}
         </button>
       </div>
+
 
       {/* FLIPPABLE CONTENT */}
       {showNotes ? (
