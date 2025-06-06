@@ -31,22 +31,24 @@ export default function Notes({ peerAddress }: NotesProps) {
       <div className="notes-title">Notes</div>
 
       <div className="notes-section">
-        <label htmlFor="intentions">Intentions</label>
-        <textarea
-          id="intentions"
-          value={intentions}
-          onChange={(e) => setIntentions(e.target.value)}
-          placeholder="Where do you want this relationship to go?"
-        />
-      </div>
-
-      <div className="notes-section">
-        <label htmlFor="personalNotes">Personal Notes</label>
+        <label htmlFor="personalNotes">About Them</label>
+        <small>Your observations and what they have said/done.</small>
         <textarea
           id="personalNotes"
           value={personalNotes}
           onChange={(e) => setPersonalNotes(e.target.value)}
-          placeholder="Hobbies, interests, background info..."
+          placeholder="E.g., shared hobbies, behavior, promises, tone..."
+        />
+      </div>
+
+      <div className="notes-section">
+        <label htmlFor="intentions">My Intentions</label>
+        <small>Your perspective and hopes for the relationship.</small>
+        <textarea
+          id="intentions"
+          value={intentions}
+          onChange={(e) => setIntentions(e.target.value)}
+          placeholder="E.g., friendship, collaboration, keep it light..."
         />
       </div>
     </div>
