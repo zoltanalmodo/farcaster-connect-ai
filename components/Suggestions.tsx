@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { useChatMessages } from '../lib/useChatMessages'; // 🔹 You'll create this
+import { useNotes } from '../lib/useNotes'; // 🔹 You'll create this
 
 interface Suggestion {
   text: string;
@@ -8,53 +10,37 @@ interface Suggestion {
 export default function Suggestions() {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [error, setError] = useState('');
+
+  const chatMessages = useChatMessages();
+  const { intentions, aboutThem } = useNotes();
 
   const fetchSuggestions = async () => {
     setLoading(true);
-    setError('');
     setSuggestions([]);
 
-    // Replace this with real chat + notes state later
     const context = `
 Recent chat messages:
-- They said they're excited about next week's NFT drop.
-- I shared a music playlist and they loved it.
-- They mentioned feeling a bit overwhelmed with work.
+${chatMessages.map((msg) => `- ${msg}`).join('\n')}
 
 My notes:
 About Them:
-Very creative, introverted. Likes climbing and DAOs.
-They mentioned wanting to collaborate on a project.
+${aboutThem}
 
 My Intentions:
-I’d like to build a real friendship and maybe even explore a joint NFT idea.
-Would love to support them when they’re stressed.
+${intentions}
 
 What’s a good message to send next?
-    `;
+`;
 
-    try {
-      const res = await fetch('/api/suggest', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ message: context }),
-      });
+    const res = await fetch('/api/suggest', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ message: context }),
+    });
 
-      const data = await res.json();
-
-      if (!res.ok) {
-        setError(data.error || 'Something went wrong.');
-        return;
-      }
-
-      setSuggestions(data.suggestions || []);
-    } catch (err) {
-      console.error('Suggestion fetch error:', err);
-      setError('Failed to fetch suggestions.');
-    } finally {
-      setLoading(false);
-    }
+    const data = await res.json();
+    setSuggestions(data.suggestions || []);
+    setLoading(false);
   };
 
   return (
@@ -68,8 +54,7 @@ What’s a good message to send next?
       </div>
 
       <div className="suggestion-output">
-        {error && <p style={{ color: 'red' }}>⚠️ {error}</p>}
-        {!error && suggestions.length === 0 && !loading && <p>No suggestions yet.</p>}
+        {suggestions.length === 0 && !loading && <p>No suggestions yet.</p>}
 
         {suggestions.map((s, index) => (
           <div key={index} style={{ marginBottom: '1rem' }}>
