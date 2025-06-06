@@ -19,7 +19,7 @@ export default function Suggestions() {
   const [showCustom, setShowCustom] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
-  // Auto-resize on initial render and update
+  // Auto-resize text area on change
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -74,18 +74,34 @@ What’s a good message to send next?
         {showCustom ? 'Refine AI' : 'AI Suggestions'}
       </div>
 
-      <div className="suggestion-controls" style={{ display: 'flex', gap: '1rem' }}>
-        {!showCustom && (
-          <button className="get-button" onClick={fetchSuggestions} disabled={loading}>
-            {loading ? 'Thinking...' : 'Get Suggestions'}
-          </button>
+      <div className="suggestion-controls">
+        {showCustom ? (
+          <>
+            <div style={{ flexGrow: 1 }}></div>
+            <button
+              className="refine-button"
+              onClick={() => setShowCustom(false)}
+            >
+              Done
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              className="get-button"
+              onClick={fetchSuggestions}
+              disabled={loading}
+            >
+              {loading ? 'Thinking...' : 'Get Suggestions'}
+            </button>
+            <button
+              className="refine-button"
+              onClick={() => setShowCustom(true)}
+            >
+              Refine AI
+            </button>
+          </>
         )}
-        <button
-          className="refine-button"
-          onClick={() => setShowCustom((prev) => !prev)}
-        >
-          {showCustom ? 'Done' : 'Refine AI'}
-        </button>
       </div>
 
       {showCustom ? (
