@@ -1,10 +1,9 @@
 // pages/api/suggest.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import OpenAI from 'openai';
 
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
+  apiKey: process.env.OPENAI_API_KEY!,
 });
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
@@ -16,7 +15,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // ✅ changed from gpt-4
+      model: 'gpt-3.5-turbo',
       temperature: 0.8,
       messages: [
         {
@@ -26,10 +25,7 @@ Return 1–3 message suggestions. Each should include a short reason (tone, inte
 Respond in JSON format:
 { "suggestions": [ { "text": "message", "reason": "why it's good" }, ... ] }`,
         },
-        {
-          role: 'user',
-          content: message,
-        },
+        { role: 'user', content: message },
       ],
     });
 
