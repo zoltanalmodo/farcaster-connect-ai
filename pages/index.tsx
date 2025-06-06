@@ -35,10 +35,41 @@ export default function Home() {
   return (
     <div className="chat-wrapper">
       <Head>
-        <title>Farcaster Connect AI</title>
+        <title>CastCompass</title>
+        <meta
+          name="description"
+          content="CastCompass helps you connect with purpose. Organize your relationships, define your intentions, and craft smarter, more meaningful messages using AI."
+        />
+        <meta property="og:title" content="CastCompass" />
+        <meta
+          property="og:description"
+          content="Intentional messaging. Smarter relationships."
+        />
+        <meta property="og:type" content="website" />
+        <meta property="og:image" content="/social-preview.png" />
+        <meta property="og:url" content="https://your-app-url.com" />
+
+        <meta name="twitter:card" content="summary_large_image" />
+        <meta name="twitter:title" content="CastCompass" />
+        <meta
+          name="twitter:description"
+          content="Intentional messaging. Smarter relationships."
+        />
+        <meta name="twitter:image" content="/social-preview.png" />
       </Head>
 
-      <div className="chat-title">Farcaster Connect AI</div>
+      {/* App Title + Subtitle */}
+      <div className="chat-title">CastCompass</div>
+      <p
+        style={{
+          marginTop: '-0.5rem',
+          marginBottom: '1rem',
+          color: 'gray',
+          fontSize: '1.1rem',
+        }}
+      >
+        Intentional messaging. Smarter relationships.
+      </p>
 
       {/* BUTTON ROW */}
       <div className="button-bar">

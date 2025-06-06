@@ -49,7 +49,11 @@ export default function ChatWindow({
 
       for await (const msg of await conversation.streamMessages()) {
         setMessages((prev) => {
-          const exists = prev.some((m) => m.id === msg.id);
+          const exists = prev.some(
+            (m) =>
+              m.id === msg.id ||
+              (m.content === msg.content && m.senderAddress === msg.senderAddress)
+          );
           const updated = exists ? prev : [...prev, msg];
 
           sessionStorage.setItem(
@@ -68,10 +72,10 @@ export default function ChatWindow({
   }, [xmtpClient, signer, address]);
 
   const handleSend = async () => {
-    if (!message.trim() || !xmtpClient) return;
+    if (!message.trim() || !xmtpClient || !address) return;
 
     const recipient =
-      address?.toLowerCase() === SEND_ADDRESS.toLowerCase()
+      address.toLowerCase() === SEND_ADDRESS.toLowerCase()
         ? REPLY_ADDRESS
         : SEND_ADDRESS;
 
@@ -83,19 +87,6 @@ export default function ChatWindow({
       existing ?? (await xmtpClient.conversations.newConversation(recipient));
 
     await conversation.send(message);
-
-    const newMessage: ChatMessage = {
-      id: Date.now().toString(),
-      senderAddress: address!,
-      content: message,
-    };
-
-    const updated = [...messages, newMessage];
-    setMessages(updated);
-    sessionStorage.setItem(
-      'chatMessages',
-      JSON.stringify(updated.map((m) => m.content))
-    );
 
     setMessage('');
     setStatus('✅ Message sent!');
