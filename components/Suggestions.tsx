@@ -1,13 +1,21 @@
 import { useState, useRef, useEffect } from 'react';
-import { useClient } from '@xmtp/react-sdk';
 import { useAccount } from 'wagmi';
+
+const SEND_ADDRESS = process.env.NEXT_PUBLIC_SEND_ADDRESS!;
+const REPLY_ADDRESS = process.env.NEXT_PUBLIC_REPLY_ADDRESS!;
 
 interface Suggestion {
   text: string;
   reason: string;
 }
 
-export default function Suggestions() {
+export default function Suggestions({
+  xmtpClient,
+  signer,
+}: {
+  xmtpClient: any;
+  signer: any;
+}) {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [customInstruction, setCustomInstruction] = useState('');
@@ -17,7 +25,6 @@ export default function Suggestions() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   const { address } = useAccount();
-  const xmtpClient = useClient();
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -60,7 +67,7 @@ export default function Suggestions() {
 
     const mapped = Array.isArray(data.suggestions)
       ? data.suggestions.map((s: string) => ({
-          text: s.trim(),
+          text: s.trim().replace(/^["\d.]+/, '').replace(/^"|"$/g, ''),
           reason: `Tone based on "${myIntentions}" and what you know about them.`,
         }))
       : [];
@@ -71,14 +78,24 @@ export default function Suggestions() {
 
   const sendViaXMTP = async (message: string) => {
     try {
-      const recipientAddress = localStorage.getItem('recipientAddress') || '';
-
-      if (!xmtpClient.client || !recipientAddress) {
-        alert('Missing XMTP client or recipient');
+      if (!xmtpClient || !address) {
+        console.error('Missing XMTP Client or wallet address');
+        alert('Missing XMTP client or wallet address');
         return;
       }
 
-      const conversation = await xmtpClient.client.conversations.newConversation(recipientAddress);
+      const recipient =
+        address.toLowerCase() === SEND_ADDRESS.toLowerCase()
+          ? REPLY_ADDRESS
+          : SEND_ADDRESS;
+
+      const existing = (await xmtpClient.conversations.list()).find(
+        (c: any) => c.peerAddress.toLowerCase() === recipient.toLowerCase()
+      );
+
+      const conversation =
+        existing ?? (await xmtpClient.conversations.newConversation(recipient));
+
       await conversation.send(message);
       alert('✅ Message sent via XMTP!');
     } catch (err) {
@@ -86,7 +103,6 @@ export default function Suggestions() {
       alert('Error sending message.');
     }
   };
-
 
   return (
     <div className={`suggestion-box ${showCustom ? 'purple-box' : 'blue-box'}`}>

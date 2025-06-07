@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 
-const SEND_ADDRESS = '0x4744e5abf3cbf93d059e2ec4de31df1b2de81249';
-const REPLY_ADDRESS = '0x0832CE6C215B079e665b99cB1F27C9A2d4E0226B';
+const SEND_ADDRESS = process.env.NEXT_PUBLIC_SEND_ADDRESS!;
+const REPLY_ADDRESS = process.env.NEXT_PUBLIC_REPLY_ADDRESS!;
 
 interface ChatMessage {
   id: string;
