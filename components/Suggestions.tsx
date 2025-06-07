@@ -1,4 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
+import { useClient } from '@xmtp/react-sdk';
+import { useAccount } from 'wagmi';
 
 interface Suggestion {
   text: string;
@@ -13,6 +15,9 @@ export default function Suggestions() {
   const [scopeCount, setScopeCount] = useState(10);
   const [useAllMessages, setUseAllMessages] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+
+  const { address } = useAccount();
+  const xmtpClient = useClient();
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -32,7 +37,6 @@ export default function Suggestions() {
       ? chatMessages
       : chatMessages.slice(-scopeCount);
 
-    // Format chat messages for API
     const formattedMessages = selectedMessages.map((m: string) => {
       const sender = m.startsWith('You:') ? 'user' : 'them';
       const text = m.replace(/^You: |^Them: /, '');
@@ -65,6 +69,25 @@ export default function Suggestions() {
     setLoading(false);
   };
 
+  const sendViaXMTP = async (message: string) => {
+    try {
+      const recipientAddress = localStorage.getItem('recipientAddress') || '';
+
+      if (!xmtpClient.client || !recipientAddress) {
+        alert('Missing XMTP client or recipient');
+        return;
+      }
+
+      const conversation = await xmtpClient.client.conversations.newConversation(recipientAddress);
+      await conversation.send(message);
+      alert('✅ Message sent via XMTP!');
+    } catch (err) {
+      console.error('❌ Failed to send via XMTP:', err);
+      alert('Error sending message.');
+    }
+  };
+
+
   return (
     <div className={`suggestion-box ${showCustom ? 'purple-box' : 'blue-box'}`}>
       <div className="suggestion-title">
@@ -73,9 +96,7 @@ export default function Suggestions() {
 
       <div
         className="suggestion-controls"
-        style={{
-          justifyContent: showCustom ? 'flex-end' : 'space-between',
-        }}
+        style={{ justifyContent: showCustom ? 'flex-end' : 'space-between' }}
       >
         {!showCustom && (
           <button className="get-button" onClick={fetchSuggestions} disabled={loading}>
@@ -152,10 +173,26 @@ export default function Suggestions() {
         <div className="suggestion-output" style={{ marginTop: '1rem' }}>
           {suggestions.length === 0 && !loading && <p>No suggestions yet.</p>}
           {suggestions.map((s, index) => (
-            <div key={index} style={{ marginBottom: '1rem' }}>
+            <div key={index} style={{ marginBottom: '1.5rem' }}>
               <strong>💬 {s.text}</strong>
               <br />
               <em>🧠 {s.reason}</em>
+              <br />
+              <button
+                className="send-xmtp-button"
+                style={{
+                  marginTop: '0.5rem',
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '8px',
+                  background: '#ff4081',
+                  color: '#fff',
+                  border: 'none',
+                  cursor: 'pointer',
+                }}
+                onClick={() => sendViaXMTP(s.text)}
+              >
+                ✉️ Send this answer via XMTP
+              </button>
             </div>
           ))}
         </div>
