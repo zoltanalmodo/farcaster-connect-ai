@@ -5,17 +5,10 @@ interface Suggestion {
   reason: string;
 }
 
-const defaultInstruction = `You are an emotionally intelligent AI assistant helping a user craft thoughtful, casual, and friendly messages.
-
-Your goal is to:
-- Suggest 1–3 short and warm replies based on recent chat history and the user's intentions
-- Be supportive, humorous, or lighthearted depending on context
-- Match the tone of a good friend or someone who genuinely cares`;
-
 export default function Suggestions() {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
-  const [customInstruction, setCustomInstruction] = useState(defaultInstruction);
+  const [customInstruction, setCustomInstruction] = useState('');
   const [showCustom, setShowCustom] = useState(false);
   const [scopeCount, setScopeCount] = useState(10);
   const [useAllMessages, setUseAllMessages] = useState(false);
@@ -39,33 +32,36 @@ export default function Suggestions() {
       ? chatMessages
       : chatMessages.slice(-scopeCount);
 
-    const messageList = selectedMessages.map((m: string) => `- ${m}`).join('\n');
+    // Format chat messages for API
+    const formattedMessages = selectedMessages.map((m: string) => {
+      const sender = m.startsWith('You:') ? 'user' : 'them';
+      const text = m.replace(/^You: |^Them: /, '');
+      return { sender, text };
+    });
 
-    const about = localStorage.getItem('aboutThem') || '';
-    const intentions = localStorage.getItem('myIntentions') || '';
+    const aboutThem = localStorage.getItem('aboutThem') || '';
+    const myIntentions = localStorage.getItem('myIntentions') || '';
 
-    const context = `
-${showCustom ? customInstruction : ''}
-Recent chat messages:
-${messageList}
-
-About Them:
-${about}
-
-My Intentions:
-${intentions}
-
-What’s a good message to send next?
-`;
-
-    const res = await fetch('/api/suggest', {
+    const res = await fetch('/api/suggest-agent', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ message: context }),
+      body: JSON.stringify({
+        messages: formattedMessages,
+        aboutThem,
+        myIntentions,
+      }),
     });
 
     const data = await res.json();
-    setSuggestions(data.suggestions || []);
+
+    const mapped = Array.isArray(data.suggestions)
+      ? data.suggestions.map((s: string) => ({
+          text: s.trim(),
+          reason: `Tone based on "${myIntentions}" and what you know about them.`,
+        }))
+      : [];
+
+    setSuggestions(mapped);
     setLoading(false);
   };
 
