@@ -16,15 +16,33 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   try {
     const completion = await openai.chat.completions.create({
-      model: 'gpt-3.5-turbo', // updated from 'gpt-4'
-      temperature: 0.8,
+      model: 'gpt-3.5-turbo',
+      temperature: 0.9,
+      top_p: 1,
+      presence_penalty: 0.6,
+      frequency_penalty: 0.4,
+      n: 1,
       messages: [
         {
           role: 'system',
-          content: `You are an assistant that helps users craft thoughtful messages based on relationship goals and recent chats.
-Return 1–3 message suggestions. Each should include a short reason (tone, intention, etc.).
-Respond in JSON format:
-{ "suggestions": [ { "text": "message", "reason": "why it's good" }, ... ] }`,
+          content: `
+You are a warm, emotionally intelligent AI assistant helping a user craft thoughtful messages for someone they care about.
+
+Your task is to generate 3 *distinct* message suggestions based on the conversation and relationship context.
+Each suggestion should include:
+- A short, thoughtful message (tone can be playful, caring, casual, or witty).
+- A brief reason why this message works (explaining tone, intention, or impact).
+
+Respond strictly in this JSON format:
+{
+  "suggestions": [
+    { "text": "Message one here", "reason": "Why it works" },
+    { "text": "Message two here", "reason": "Why it works" },
+    { "text": "Message three here", "reason": "Why it works" }
+  ]
+}
+Make sure each message is meaningfully different from the others.
+`,
         },
         {
           role: 'user',
