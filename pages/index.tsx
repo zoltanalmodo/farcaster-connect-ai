@@ -8,6 +8,8 @@ import { useAccount, useWalletClient } from 'wagmi';
 import { ethers } from 'ethers';
 import { initXMTP } from '../lib/xmtp';
 
+// before agent kit
+
 const peerAddress = '0x0832CE6C215B079e665b99cB1F27C9A2d4E0226B';
 
 export default function Home() {
