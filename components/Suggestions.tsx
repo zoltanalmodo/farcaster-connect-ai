@@ -75,7 +75,12 @@ What’s a good message to send next?
         {showCustom ? 'Refine AI' : 'AI Suggestions'}
       </div>
 
-      <div className="suggestion-controls">
+      <div
+        className="suggestion-controls"
+        style={{
+          justifyContent: showCustom ? 'flex-end' : 'space-between',
+        }}
+      >
         {!showCustom && (
           <button className="get-button" onClick={fetchSuggestions} disabled={loading}>
             {loading ? 'Thinking...' : 'Get Suggestions'}
@@ -115,7 +120,15 @@ What’s a good message to send next?
             />
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginTop: '1rem' }}>
+          <div
+            className="scope-controls"
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '1rem',
+              marginTop: '1rem',
+            }}
+          >
             <label>
               Take last{' '}
               <input
@@ -125,12 +138,6 @@ What’s a good message to send next?
                 value={scopeCount}
                 onChange={(e) => setScopeCount(Number(e.target.value))}
                 disabled={useAllMessages}
-                style={{
-                  width: '60px',
-                  padding: '0.25rem',
-                  borderRadius: '6px',
-                  border: '1px solid #ccc',
-                }}
               />{' '}
               messages
             </label>
@@ -141,7 +148,7 @@ What’s a good message to send next?
                 checked={useAllMessages}
                 onChange={() => setUseAllMessages(!useAllMessages)}
               />{' '}
-              Use all messages
+              Use all messages for sampling
             </label>
           </div>
         </>
