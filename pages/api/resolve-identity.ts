@@ -12,7 +12,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!identifier || typeof identifier !== 'string') {
       return res.status(400).json({ error: 'Missing or invalid identifier' });
     }
-
+// api.agentki.xyz did not respond to the API call !!!
     const response = await fetch('https://api.agentkit.xyz/identity/resolve', {
       method: 'POST',
       headers: {

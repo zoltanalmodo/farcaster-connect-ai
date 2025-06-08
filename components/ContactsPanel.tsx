@@ -1,19 +1,13 @@
+// components/ContactsPanel.tsx
 import React, { useEffect, useState } from 'react';
 import { resolveIdentity } from '../lib/agentkit';
 import { Client } from '@xmtp/xmtp-js';
 import { useWalletClient } from 'wagmi';
 import { walletClientToSigner } from '../lib/walletClientToSigner';
 
-
 type Contact = {
   address: string;
   displayName: string;
-  avatar?: string;
-  bio?: string;
-  ens?: string;
-  farcaster?: string;
-  twitter?: string;
-  followerCount?: number;
 };
 
 type Props = {
@@ -50,9 +44,10 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
 
     try {
       setError(null);
-      const signer = await walletClientToSigner(walletClient); // ✅ compatible with XMTP
+      const signer = await walletClientToSigner(walletClient);
 
       const identity = await resolveIdentity(input.trim());
+      console.log('✅ resolveIdentity output:', identity);
       if (!identity?.walletAddress) {
         setError('Could not resolve address');
         return;
@@ -68,13 +63,7 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
 
       const contact: Contact = {
         address: identity.walletAddress,
-        displayName: identity.displayName || input.trim(),
-        avatar: identity.avatarUrl || 'https://placekitten.com/40/40',
-        bio: identity.profileBio || '',
-        ens: identity.ens,
-        farcaster: identity.farcaster,
-        twitter: identity.twitter,
-        followerCount: identity.followerCount,
+        displayName: identity.displayName,
       };
 
       setContacts((prev) => [...prev, contact]);
@@ -114,23 +103,12 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
             onClick={() => onSelectContact(contact.address)}
             className="flex items-center gap-3 p-2 border rounded hover:bg-gray-100 cursor-pointer"
           >
-            <img
-              src={contact.avatar}
-              alt="avatar"
-              className="w-10 h-10 rounded-full object-cover"
-            />
+            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
+              {contact.displayName[0]?.toUpperCase()}
+            </div>
             <div>
               <div className="font-semibold">{contact.displayName}</div>
-              <div className="text-sm text-gray-600">
-                {contact.bio || 'No bio'}
-                <br />
-                {contact.ens && <span>🔗 ENS: {contact.ens} </span>}
-                {contact.farcaster && <span>🎯 Farcaster: {contact.farcaster} </span>}
-                {contact.twitter && <span>🐦 Twitter: {contact.twitter}</span>}
-                {contact.followerCount !== undefined && (
-                  <div>📊 Followers: {contact.followerCount}</div>
-                )}
-              </div>
+              <div className="text-sm text-gray-600">{contact.address}</div>
             </div>
           </div>
         ))}
