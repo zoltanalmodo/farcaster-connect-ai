@@ -1,20 +1,5 @@
 // lib/agentkit.ts
-import { AgentKit } from '@coinbase/agentkit';
 import { isAddress } from 'viem';
-
-let agentKitInstance: AgentKit | null = null;
-
-export async function getAgentKit(): Promise<AgentKit> {
-  if (agentKitInstance) return agentKitInstance;
-
-  const agentKit = await AgentKit.from({
-    cdpApiKeyId: process.env.CDP_API_KEY_NAME!,
-    cdpApiKeySecret: process.env.CDP_API_KEY_PRIVATE_KEY!,
-  });
-
-  agentKitInstance = agentKit;
-  return agentKit;
-}
 
 export async function resolveIdentity(input: string): Promise<{
   walletAddress: string;
@@ -34,6 +19,8 @@ export async function resolveIdentity(input: string): Promise<{
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ identifier: handle }),
     });
+
+    if (!res.ok) throw new Error(`API error: ${res.status}`);
 
     const result = await res.json();
 

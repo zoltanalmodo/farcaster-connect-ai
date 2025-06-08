@@ -1,6 +1,6 @@
 // pages/api/agentkit.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { getAgentKit } from '../../lib/agentkit'; // ← relative to /pages/api
+import { getAgentKit } from '../../lib/server/agentkit'; // ✅ Correct path to where getAgentKit now lives
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
