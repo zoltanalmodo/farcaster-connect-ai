@@ -1,3 +1,4 @@
+// pages/api/resolve-identity.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 
 if (!process.env.CDP_API_KEY_NAME || !process.env.CDP_API_KEY_PRIVATE_KEY) {
@@ -23,15 +24,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     });
 
     if (!response.ok) {
-      const text = await response.text();
-      throw new Error(`AgentKit API error: ${response.status} - ${text}`);
+      const errorText = await response.text();
+      throw new Error(`AgentKit API error ${response.status}: ${errorText}`);
     }
 
     const result = await response.json();
-    res.status(200).json(result);
+    return res.status(200).json(result);
   } catch (err: any) {
-    console.error('❌ AgentKit identity resolution failed:', err);
-    res.status(500).json({
+    console.error('❌ Identity resolution failed:', err);
+    return res.status(500).json({
       error: 'Identity resolution failed',
       details: err.message,
     });
