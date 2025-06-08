@@ -1,9 +1,10 @@
+// lib/agentkit.ts
 import { AgentKit } from '@coinbase/agentkit';
 import { isAddress } from 'viem';
 
 let agentKitInstance: AgentKit | null = null;
 
-export async function getAgentKit() {
+export async function getAgentKit(): Promise<AgentKit> {
   if (agentKitInstance) return agentKitInstance;
 
   const agentKit = await AgentKit.from({
@@ -15,22 +16,6 @@ export async function getAgentKit() {
   return agentKit;
 }
 
-// 👇 Manually define identityTool (as per AgentKit 0.8.0 format)
-const identityTool = {
-  name: 'resolve-identity',
-  description: 'Resolves a handle or ENS to full identity metadata.',
-  run: async (agentKit: AgentKit, { identifier }: { identifier: string }) => {
-    const res = await fetch(`https://api.airstack.xyz/identity/${identifier}`, {
-      headers: {
-        'x-api-key': process.env.CDP_API_KEY_PRIVATE_KEY!,
-      },
-    });
-
-    if (!res.ok) throw new Error('Failed to resolve identity');
-    return res.json();
-  },
-};
-
 export async function resolveIdentity(input: string): Promise<{
   walletAddress: string;
   displayName: string;
@@ -41,11 +26,16 @@ export async function resolveIdentity(input: string): Promise<{
   twitter?: string;
   followerCount?: number;
 }> {
-  const agentKit = await getAgentKit();
   const handle = input.startsWith('@') ? input.slice(1) : input;
 
   try {
-    const result = await identityTool.run(agentKit, { identifier: handle });
+    const res = await fetch('/api/resolve-identity', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ identifier: handle }),
+    });
+
+    const result = await res.json();
 
     return {
       walletAddress: result.walletAddress,
@@ -59,7 +49,6 @@ export async function resolveIdentity(input: string): Promise<{
     };
   } catch (err) {
     console.error('❌ Identity resolution failed:', err);
-
     return {
       walletAddress: isAddress(input)
         ? input
