@@ -1,28 +1,70 @@
-import type { NextApiRequest, NextApiResponse } from 'next'; // ✅ missing import
-import { openaiSuggestTool } from '../../lib/openaiTool';     // ✅ missing import
+// pages/api/suggest-agent.ts
+
+import type { NextApiRequest, NextApiResponse } from 'next';
+import { openai } from '../../lib/openaiTool'; // Raw OpenAI client
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { messages, aboutThem, myIntentions } = req.body;
-
-  console.log('📦 Incoming payload:', {
-    messages,
-    aboutThem,
-    myIntentions,
-  });
+  const { messages, aboutThem, myIntentions, instruction } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Missing or invalid messages array' });
   }
 
+  if (!instruction || typeof instruction !== 'string') {
+    return res.status(400).json({ error: 'Missing or invalid AI instruction' });
+  }
+
+  const chatHistory = messages.map((m: any) => `- ${m.sender}: ${m.text}`).join('\n');
+
+  const userPrompt = `
+Chat history:
+${chatHistory}
+
+About them: ${aboutThem || 'N/A'}
+Your intentions: ${myIntentions || 'N/A'}
+`;
+
+  const formatRequirement = `
+Respond strictly in this JSON format:
+
+[
+  {
+    "text": "Sure! I’ll be there early to help out.",
+    "explanation": "Shows commitment and readiness to support."
+  },
+  ...
+]
+`;
+
+  const fullPrompt = instruction.trim() + '\n\n' + formatRequirement;
+
   try {
-    const result = await openaiSuggestTool.run({
-      messages,
-      context: { aboutThem, myIntentions },
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      temperature: 0.9,
+      top_p: 1,
+      presence_penalty: 0.6,
+      frequency_penalty: 0.4,
+      n: 1,
+      messages: [
+        { role: 'system', content: fullPrompt },
+        { role: 'user', content: userPrompt },
+      ],
     });
 
-    res.status(200).json(result);
+    const raw = completion.choices[0].message?.content || '';
+
+    let parsed;
+    try {
+      parsed = JSON.parse(raw);
+    } catch (err) {
+      console.error('🛑 Failed to parse OpenAI JSON:', raw);
+      return res.status(500).json({ error: 'Invalid JSON from AI', raw });
+    }
+
+    res.status(200).json(parsed);
   } catch (err: any) {
-    console.error('❌ Suggestion generation failed:', err);
-    res.status(500).json({ error: 'AgentKit suggest failed', details: err.message });
+    console.error('❌ OpenAI request failed:', err);
+    res.status(500).json({ error: 'OpenAI request failed', details: err.message });
   }
 }

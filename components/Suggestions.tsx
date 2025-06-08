@@ -1,5 +1,6 @@
 import { useState, useRef, useEffect } from 'react';
 import { useAccount } from 'wagmi';
+import { defaultInstruction } from '../lib/defaultInstruction';
 
 const SEND_ADDRESS = process.env.NEXT_PUBLIC_SEND_ADDRESS!;
 const REPLY_ADDRESS = process.env.NEXT_PUBLIC_REPLY_ADDRESS!;
@@ -20,11 +21,27 @@ export default function Suggestions({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [customInstruction, setCustomInstruction] = useState('');
   const [showCustom, setShowCustom] = useState(false);
-  const [scopeCount, setScopeCount] = useState(10);
+  const [scopeCount, setScopeCount] = useState(5);
   const [useAllMessages, setUseAllMessages] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { address } = useAccount();
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      const savedInstruction = localStorage.getItem('customInstruction');
+      const savedScope = localStorage.getItem('scopeCount');
+      const savedAll = localStorage.getItem('useAllMessages');
+
+      setCustomInstruction(savedInstruction || defaultInstruction);
+      if (!savedInstruction) {
+        localStorage.setItem('customInstruction', defaultInstruction);
+      }
+
+      if (savedScope) setScopeCount(Number(savedScope));
+      if (savedAll === 'true') setUseAllMessages(true);
+    }
+  }, []);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -60,15 +77,17 @@ export default function Suggestions({
         messages: formattedMessages,
         aboutThem,
         myIntentions,
+        instruction: customInstruction,
       }),
     });
 
     const data = await res.json();
+    console.log('🧠 API Response:', data);
 
-    const mapped = Array.isArray(data.suggestions)
-      ? data.suggestions.map((s: string) => ({
-          text: s.trim().replace(/^["\d.]+/, '').replace(/^"|"$/g, ''),
-          reason: `Tone based on "${myIntentions}" and what you know about them.`,
+    const mapped = Array.isArray(data)
+      ? data.map((s: any) => ({
+          text: s.text?.trim() || '',
+          reason: s.explanation?.trim() || 'No explanation provided by AI.',
         }))
       : [];
 
@@ -134,8 +153,12 @@ export default function Suggestions({
               id="instruction"
               ref={textareaRef}
               value={customInstruction}
-              onChange={(e) => setCustomInstruction(e.target.value)}
-              placeholder="Enter your own AI prompt..."
+              onChange={(e) => {
+                const value = e.target.value;
+                setCustomInstruction(value);
+                localStorage.setItem('customInstruction', value);
+              }}
+              placeholder="Edit the AI's behavior..."
               style={{
                 width: '100%',
                 marginTop: '0.5rem',
@@ -157,32 +180,62 @@ export default function Suggestions({
             className="scope-controls"
             style={{
               display: 'flex',
+              width: '100%',
+              justifyContent: 'space-between',
               alignItems: 'center',
-              gap: '1rem',
               marginTop: '1rem',
+              gap: '1rem',
             }}
           >
-            <label>
-              Take last{' '}
-              <input
-                type="number"
-                min="1"
-                max="100"
-                value={scopeCount}
-                onChange={(e) => setScopeCount(Number(e.target.value))}
-                disabled={useAllMessages}
-              />{' '}
-              messages
-            </label>
+            <div
+              style={{
+                display: 'flex',
+                gap: '1rem',
+                flexWrap: 'wrap',
+                alignItems: 'center',
+                flex: 1,
+              }}
+            >
+              <label>
+                Take last{' '}
+                <input
+                  type="number"
+                  min="1"
+                  max="100"
+                  value={scopeCount}
+                  onChange={(e) => {
+                    const newVal = Number(e.target.value);
+                    setScopeCount(newVal);
+                    localStorage.setItem('scopeCount', newVal.toString());
+                  }}
+                  disabled={useAllMessages}
+                />{' '}
+                messages
+              </label>
 
-            <label>
-              <input
-                type="checkbox"
-                checked={useAllMessages}
-                onChange={() => setUseAllMessages(!useAllMessages)}
-              />{' '}
-              Use all messages for sampling
-            </label>
+              <label style={{ whiteSpace: 'nowrap' }}>
+                <input
+                  type="checkbox"
+                  checked={useAllMessages}
+                  onChange={() => {
+                    const newVal = !useAllMessages;
+                    setUseAllMessages(newVal);
+                    localStorage.setItem('useAllMessages', newVal.toString());
+                  }}
+                />{' '}
+                Use all messages
+              </label>
+            </div>
+
+            <button
+              className="restore-default-button"
+              onClick={() => {
+                setCustomInstruction(defaultInstruction);
+                localStorage.setItem('customInstruction', defaultInstruction);
+              }}
+            >
+              🔁 Restore to Default
+            </button>
           </div>
         </>
       ) : (

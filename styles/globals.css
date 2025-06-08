@@ -249,3 +249,14 @@ body {
   transform: scale(1.2);
   margin-right: 0.5rem;
 }
+
+.restore-default-button {
+  padding: 0.4rem 0.75rem;
+  border-radius: 12px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e0;
+  cursor: pointer;
+  font-weight: 500;
+  white-space: nowrap;
+  font-size: 0.95rem;
+}
