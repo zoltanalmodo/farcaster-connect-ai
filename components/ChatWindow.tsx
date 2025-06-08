@@ -1,8 +1,6 @@
+// ✅ UPDATED: ChatWindow.tsx
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
-
-const SEND_ADDRESS = process.env.NEXT_PUBLIC_SEND_ADDRESS!;
-const REPLY_ADDRESS = process.env.NEXT_PUBLIC_REPLY_ADDRESS!;
 
 interface ChatMessage {
   id: string;
@@ -13,9 +11,11 @@ interface ChatMessage {
 export default function ChatWindow({
   xmtpClient,
   signer,
+  recipient,
 }: {
   xmtpClient: any;
   signer: any;
+  recipient: string;
 }) {
   const { address } = useAccount();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -24,14 +24,9 @@ export default function ChatWindow({
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!xmtpClient || !signer || !address) return;
+    if (!xmtpClient || !signer || !address || !recipient) return;
 
     const loadConversation = async () => {
-      const recipient =
-        address.toLowerCase() === SEND_ADDRESS.toLowerCase()
-          ? REPLY_ADDRESS
-          : SEND_ADDRESS;
-
       const existing = (await xmtpClient.conversations.list()).find(
         (c: any) => c.peerAddress?.toLowerCase() === recipient.toLowerCase()
       );
@@ -69,15 +64,10 @@ export default function ChatWindow({
     };
 
     loadConversation();
-  }, [xmtpClient, signer, address]);
+  }, [xmtpClient, signer, address, recipient]);
 
   const handleSend = async () => {
-    if (!message.trim() || !xmtpClient || !address) return;
-
-    const recipient =
-      address.toLowerCase() === SEND_ADDRESS.toLowerCase()
-        ? REPLY_ADDRESS
-        : SEND_ADDRESS;
+    if (!message.trim() || !xmtpClient || !address || !recipient) return;
 
     const existing = (await xmtpClient.conversations.list()).find(
       (c: any) => c.peerAddress?.toLowerCase() === recipient.toLowerCase()

@@ -1,11 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import Refine from './Refine';
 import ToneControls from './ToneControls';
 import { defaultInstruction } from '../lib/defaultInstruction';
-
-const SEND_ADDRESS = process.env.NEXT_PUBLIC_SEND_ADDRESS!;
-const REPLY_ADDRESS = process.env.NEXT_PUBLIC_REPLY_ADDRESS!;
 
 interface Suggestion {
   text: string;
@@ -15,9 +12,11 @@ interface Suggestion {
 export default function Suggestions({
   xmtpClient,
   signer,
+  recipient,
 }: {
   xmtpClient: any;
   signer: any;
+  recipient: string;
 }) {
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
@@ -27,16 +26,11 @@ export default function Suggestions({
 
   const sendViaXMTP = async (message: string) => {
     try {
-      if (!xmtpClient || !address) {
-        console.error('Missing XMTP Client or wallet address');
-        alert('Missing XMTP client or wallet address');
+      if (!xmtpClient || !address || !recipient) {
+        console.error('Missing XMTP Client, wallet address, or recipient');
+        alert('Missing XMTP client, wallet address, or recipient');
         return;
       }
-
-      const recipient =
-        address.toLowerCase() === SEND_ADDRESS.toLowerCase()
-          ? REPLY_ADDRESS
-          : SEND_ADDRESS;
 
       const existing = (await xmtpClient.conversations.list()).find(
         (c: any) => c.peerAddress.toLowerCase() === recipient.toLowerCase()
@@ -53,7 +47,6 @@ export default function Suggestions({
     }
   };
 
-  // ✅ Fetch suggestions logic moved here
   const fetchSuggestions = async () => {
     setLoading(true);
     setSuggestions([]);

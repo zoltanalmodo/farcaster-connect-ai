@@ -3,12 +3,11 @@ import { useEffect, useState } from 'react';
 import ChatWindow from '../components/ChatWindow';
 import Suggestions from '../components/Suggestions';
 import Notes from '../components/Notes';
+import ContactsPanel from '../components/ContactsPanel';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { useAccount, useWalletClient } from 'wagmi';
 import { ethers } from 'ethers';
 import { initXMTP } from '../lib/xmtp';
-
-const peerAddress = '0x0832CE6C215B079e665b99cB1F27C9A2d4E0226B';
 
 export default function Home() {
   const [showNotes, setShowNotes] = useState(false);
@@ -17,6 +16,7 @@ export default function Home() {
 
   const [signer, setSigner] = useState<any>(null);
   const [xmtpClient, setXmtpClient] = useState<any>(null);
+  const [recipient, setRecipient] = useState<string | null>(null);
 
   useEffect(() => {
     if (!isConnected || !walletClient || signer || xmtpClient) return;
@@ -89,15 +89,28 @@ export default function Home() {
         </div>
       </div>
 
+      {/* CONTACTS PANEL */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <ContactsPanel onSelectContact={setRecipient} />
+      </div>
+
       {/* MAIN VIEW */}
       {showNotes ? (
-        <Notes peerAddress={peerAddress} />
+        <Notes peerAddress={recipient || ''} />
       ) : (
-        <ChatWindow xmtpClient={xmtpClient} signer={signer} />
+        <ChatWindow
+          xmtpClient={xmtpClient}
+          signer={signer}
+          recipient={recipient || ''}
+        />
       )}
 
-      {/* ✅ Pass props here as well */}
-      <Suggestions xmtpClient={xmtpClient} signer={signer} />
+      {/* AI Suggestions */}
+      <Suggestions
+        xmtpClient={xmtpClient}
+        signer={signer}
+        recipient={recipient || ''}
+      />
     </div>
   );
 }
