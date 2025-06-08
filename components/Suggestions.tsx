@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useAccount } from 'wagmi';
 import Refine from './Refine';
+import ToneControls from './ToneControls';
+import { defaultInstruction } from '../lib/defaultInstruction';
 
 const SEND_ADDRESS = process.env.NEXT_PUBLIC_SEND_ADDRESS!;
 const REPLY_ADDRESS = process.env.NEXT_PUBLIC_REPLY_ADDRESS!;
@@ -20,7 +22,7 @@ export default function Suggestions({
   const [loading, setLoading] = useState(false);
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showCustom, setShowCustom] = useState(false);
-
+  const [showTonePanel, setShowTonePanel] = useState(false);
   const { address } = useAccount();
 
   const sendViaXMTP = async (message: string) => {
@@ -51,32 +53,110 @@ export default function Suggestions({
     }
   };
 
+  // ✅ Fetch suggestions logic moved here
+  const fetchSuggestions = async () => {
+    setLoading(true);
+    setSuggestions([]);
+
+    const chatMessagesRaw = sessionStorage.getItem('chatMessages');
+    const chatMessages = chatMessagesRaw ? JSON.parse(chatMessagesRaw) : [];
+
+    const scopeCount = Number(localStorage.getItem('scopeCount')) || 5;
+    const useAllMessages = localStorage.getItem('useAllMessages') === 'true';
+
+    const selectedMessages = useAllMessages
+      ? chatMessages
+      : chatMessages.slice(-scopeCount);
+
+    const formattedMessages = selectedMessages.map((m: string) => {
+      const sender = m.startsWith('You:') ? 'user' : 'them';
+      const text = m.replace(/^You: |^Them: /, '');
+      return { sender, text };
+    });
+
+    const aboutThem = localStorage.getItem('aboutThem') || '';
+    const myIntentions = localStorage.getItem('myIntentions') || '';
+    const instruction = localStorage.getItem('customInstruction') || defaultInstruction;
+
+    try {
+      const res = await fetch('/api/suggest-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messages: formattedMessages,
+          aboutThem,
+          myIntentions,
+          instruction,
+        }),
+      });
+
+      const data = await res.json();
+      const mapped = Array.isArray(data)
+        ? data.map((s: any) => ({
+            text: s.text?.trim() || '',
+            reason: s.explanation?.trim() || 'No explanation provided by AI.',
+          }))
+        : [];
+
+      setSuggestions(mapped);
+    } catch (err) {
+      console.error('❌ Failed to fetch suggestions:', err);
+      alert('Error fetching suggestions.');
+    }
+
+    setLoading(false);
+  };
+
   return (
-    <div className={`suggestion-box ${showCustom ? 'purple-box' : 'blue-box'}`}>
+    <div
+      className={`suggestion-box ${
+        showCustom && !showTonePanel
+          ? 'purple-box'
+          : showTonePanel
+          ? 'orange-box'
+          : 'blue-box'
+      }`}
+    >
       <div className="suggestion-title">
-        {showCustom ? 'Refine AI' : 'AI Suggestions'}
+        {showTonePanel ? 'Tone Controls' : showCustom ? 'Refine AI' : 'AI Suggestions'}
       </div>
 
       <div
         className="suggestion-controls"
-        style={{ justifyContent: showCustom ? 'flex-end' : 'space-between' }}
+        style={{
+          justifyContent: showCustom ? 'flex-end' : 'space-between',
+          gap: '0.5rem',
+        }}
       >
         {!showCustom && (
-          <button
-            className="get-button"
-            onClick={() => document.dispatchEvent(new Event('fetch-suggestions'))}
-            disabled={loading}
-          >
+          <button className="get-button" onClick={fetchSuggestions} disabled={loading}>
             {loading ? 'Thinking...' : 'Get Suggestions'}
           </button>
         )}
-        <button className="refine-button" onClick={() => setShowCustom(!showCustom)}>
+
+        {showCustom && !showTonePanel && (
+          <button className="orange-button" onClick={() => setShowTonePanel(true)}>
+            Tone AI
+          </button>
+        )}
+
+        <button
+          className="refine-button"
+          onClick={() => {
+            setShowCustom(!showCustom);
+            setShowTonePanel(false);
+          }}
+        >
           {showCustom ? 'Done' : 'Refine AI'}
         </button>
       </div>
 
       {showCustom ? (
-        <Refine setSuggestions={setSuggestions} setLoading={setLoading} />
+        showTonePanel ? (
+          <ToneControls onDone={() => setShowTonePanel(false)} />
+        ) : (
+          <Refine setSuggestions={setSuggestions} setLoading={setLoading} />
+        )
       ) : (
         <div className="suggestion-output" style={{ marginTop: '1rem' }}>
           {suggestions.length === 0 && !loading && <p>No suggestions yet.</p>}
