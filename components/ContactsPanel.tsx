@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { resolveIdentity } from '../lib/agentkit';
 
 type Contact = {
@@ -6,6 +6,10 @@ type Contact = {
   displayName: string;
   avatar?: string;
   bio?: string;
+  ens?: string;
+  farcaster?: string;
+  twitter?: string;
+  followerCount?: number;
 };
 
 type Props = {
@@ -17,9 +21,25 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
   const [contacts, setContacts] = useState<Contact[]>([]);
   const [error, setError] = useState<string | null>(null);
 
+  // ✅ Load contacts from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('contacts');
+    if (saved) {
+      try {
+        setContacts(JSON.parse(saved));
+      } catch (err) {
+        console.error('Failed to parse saved contacts:', err);
+      }
+    }
+  }, []);
+
+  // ✅ Save to localStorage whenever contacts change
+  useEffect(() => {
+    localStorage.setItem('contacts', JSON.stringify(contacts));
+  }, [contacts]);
+
   const handleAddContact = async () => {
     if (!input.trim()) return;
-
     try {
       setError(null);
       const identity = await resolveIdentity(input.trim());
@@ -34,6 +54,10 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
         displayName: identity.displayName || input.trim(),
         avatar: identity.avatarUrl || 'https://placekitten.com/40/40',
         bio: identity.profileBio || '',
+        ens: identity.ens,
+        farcaster: identity.farcaster,
+        twitter: identity.twitter,
+        followerCount: identity.followerCount,
       };
 
       setContacts((prev) => [...prev, contact]);
@@ -80,7 +104,15 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
             />
             <div>
               <div className="font-semibold">{contact.displayName}</div>
-              <div className="text-sm text-gray-600">{contact.bio}</div>
+              <div className="text-sm text-gray-600">
+                {contact.bio || 'No bio'}<br />
+                {contact.ens && <span>🔗 ENS: {contact.ens} </span>}
+                {contact.farcaster && <span>🎯 Farcaster: {contact.farcaster} </span>}
+                {contact.twitter && <span>🐦 Twitter: {contact.twitter}</span>}
+                {contact.followerCount !== undefined && (
+                  <div>📊 Followers: {contact.followerCount}</div>
+                )}
+              </div>
             </div>
           </div>
         ))}

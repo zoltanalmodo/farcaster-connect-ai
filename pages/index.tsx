@@ -18,6 +18,19 @@ export default function Home() {
   const [xmtpClient, setXmtpClient] = useState<any>(null);
   const [recipient, setRecipient] = useState<string | null>(null);
 
+  // ✅ Load recipient from localStorage on mount
+  useEffect(() => {
+    const saved = localStorage.getItem('cast-compass-recipient');
+    if (saved) setRecipient(saved);
+  }, []);
+
+  // ✅ Save recipient to localStorage when changed
+  useEffect(() => {
+    if (recipient) {
+      localStorage.setItem('cast-compass-recipient', recipient);
+    }
+  }, [recipient]);
+
   useEffect(() => {
     if (!isConnected || !walletClient || signer || xmtpClient) return;
 
