@@ -15,30 +15,20 @@ export async function getAgentKit() {
   return agentKit;
 }
 
-/**
- * Fallback identity resolver.
- * Replace with real ENS/Farcaster logic later.
- */
 export async function resolveIdentity(input: string): Promise<{
   walletAddress: string;
   displayName: string;
   avatarUrl?: string;
   profileBio?: string;
 }> {
-  let address = input;
-  let displayName = input;
-  let avatarUrl = '';
-  let profileBio = '';
-
-  // 👇 If it's not a valid address, mock one (simulate ENS/Farcaster resolution)
-  if (!isAddress(input)) {
-    address = '0x' + Math.random().toString(16).substring(2, 42);
-  }
+  const handle = input.startsWith('@') ? input.slice(1) : input;
 
   return {
-    walletAddress: address,
-    displayName,
+    walletAddress: isAddress(handle)
+      ? handle
+      : '0x' + Math.random().toString(16).substring(2, 42),
+    displayName: handle,
     avatarUrl: 'https://placekitten.com/40/40',
-    profileBio: 'This is a mock identity. Real resolution coming soon.',
+    profileBio: 'This is a mock identity until full resolution is added.',
   };
 }

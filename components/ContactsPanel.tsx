@@ -1,8 +1,5 @@
-// components/ContactsPanel.tsx
 import React, { useState } from 'react';
 import { resolveIdentity } from '../lib/agentkit';
-
-
 
 type Contact = {
   address: string;
@@ -22,9 +19,9 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
 
   const handleAddContact = async () => {
     if (!input.trim()) return;
+
     try {
       setError(null);
-
       const identity = await resolveIdentity(input.trim());
 
       if (!identity?.walletAddress) {
