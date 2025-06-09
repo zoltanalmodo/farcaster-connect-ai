@@ -51,7 +51,14 @@ export default function Suggestions({
     setLoading(true);
     setSuggestions([]);
 
-    const chatMessagesRaw = sessionStorage.getItem('chatMessages');
+    if (!recipient) {
+      alert('Please select a contact first.');
+      setLoading(false);
+      return;
+    }
+
+    // ✅ Load only messages scoped to selected recipient
+    const chatMessagesRaw = sessionStorage.getItem(`chatMessages-${recipient}`);
     const chatMessages = chatMessagesRaw ? JSON.parse(chatMessagesRaw) : [];
 
     const scopeCount = Number(localStorage.getItem('scopeCount')) || 5;
