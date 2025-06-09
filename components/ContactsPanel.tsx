@@ -38,6 +38,7 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
 
   const handleAddContact = async () => {
     if (!input.trim()) return;
+
     if (!walletClient) {
       setError('Please connect your wallet first.');
       return;
@@ -69,7 +70,7 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
       const contact: Contact = {
         address: identity.walletAddress,
         displayName: identity.displayName || identity.walletAddress,
-        avatar: identity.avatarUrl, // avatar may be undefined
+        avatar: identity.avatarUrl, // may be undefined
       };
 
       setContacts(prev => [...prev, contact]);
@@ -88,9 +89,27 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
     }
   };
 
-  const handleSelect = (address: string) => {
-    setSelectedAddress(address);
-    onSelectContact(address);
+  const handleSelect = async (address: string) => {
+    if (!walletClient) {
+      setError('Please connect your wallet to view this chat.');
+      return;
+    }
+
+    try {
+      const signer = await walletClientToSigner(walletClient);
+      const xmtp = await Client.create(signer);
+      const canMessage = await xmtp.canMessage(address);
+      if (!canMessage) {
+        setError('This user is not available on XMTP.');
+        return;
+      }
+
+      setSelectedAddress(address);
+      onSelectContact(address);
+    } catch (err) {
+      console.error('❌ Failed to select contact/chat:', err);
+      setError('Could not open chat. Please try again.');
+    }
   };
 
   return (
