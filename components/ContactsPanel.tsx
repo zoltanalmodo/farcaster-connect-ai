@@ -1,4 +1,3 @@
-// components/ContactsPanel.tsx
 import React, { useEffect, useState } from 'react';
 import { resolveIdentity } from '../lib/agentkit';
 import { Client } from '@xmtp/xmtp-js';
@@ -17,6 +16,7 @@ type Props = {
 const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
   const [input, setInput] = useState('');
   const [contacts, setContacts] = useState<Contact[]>([]);
+  const [selectedAddress, setSelectedAddress] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const { data: walletClient } = useWalletClient();
 
@@ -45,17 +45,21 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
     try {
       setError(null);
       const signer = await walletClientToSigner(walletClient);
-
       const identity = await resolveIdentity(input.trim());
-      console.log('✅ resolveIdentity output:', identity);
+
       if (!identity?.walletAddress) {
-        setError('Could not resolve address');
+        setError('Could not resolve address.');
+        return;
+      }
+
+      const existing = contacts.some(c => c.address === identity.walletAddress);
+      if (existing) {
+        setError('Contact already added.');
         return;
       }
 
       const xmtp = await Client.create(signer);
       const canMessage = await xmtp.canMessage(identity.walletAddress);
-
       if (!canMessage) {
         setError('This user is not on XMTP.');
         return;
@@ -63,10 +67,10 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
 
       const contact: Contact = {
         address: identity.walletAddress,
-        displayName: identity.displayName,
+        displayName: identity.displayName || input.trim(),
       };
 
-      setContacts((prev) => [...prev, contact]);
+      setContacts(prev => [...prev, contact]);
       setInput('');
     } catch (err) {
       console.error('Failed to resolve identity or XMTP check:', err);
@@ -74,21 +78,26 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
     }
   };
 
+  const handleSelect = (address: string) => {
+    setSelectedAddress(address);
+    onSelectContact(address);
+  };
+
   return (
     <div className="contacts-panel">
-      <h2 className="text-lg font-bold mb-3">🧑‍🤝‍🧑 Contacts</h2>
+      <h2 className="contacts-title">🧑‍🤝‍🧑 Contacts</h2>
 
-      <div className="flex gap-2 mb-4">
+      <div className="contacts-input-row">
         <input
           type="text"
-          className="flex-1 border px-3 py-2 rounded"
+          className="contacts-input"
           placeholder="@handle, .eth, or 0x..."
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
         <button
           onClick={handleAddContact}
-          className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+          className="contacts-add-button"
         >
           Add
         </button>
@@ -96,19 +105,21 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
 
       {error && <p className="text-red-600 mb-2">{error}</p>}
 
-      <div className="space-y-3 max-h-80 overflow-y-auto">
+      <div className="contacts-list">
         {contacts.map((contact, idx) => (
           <div
             key={idx}
-            onClick={() => onSelectContact(contact.address)}
-            className="flex items-center gap-3 p-2 border rounded hover:bg-gray-100 cursor-pointer"
+            onClick={() => handleSelect(contact.address)}
+            className={`contacts-card ${selectedAddress === contact.address ? 'selected-contact' : ''}`}
           >
-            <div className="w-10 h-10 bg-gray-300 rounded-full flex items-center justify-center text-white font-bold">
-              {contact.displayName[0]?.toUpperCase()}
-            </div>
+            <img
+              src="https://placekitten.com/40/40"
+              alt="avatar"
+              className="contacts-avatar"
+            />
             <div>
-              <div className="font-semibold">{contact.displayName}</div>
-              <div className="text-sm text-gray-600">{contact.address}</div>
+              <div className="contacts-name">{contact.displayName}</div>
+              <div className="contacts-bio">{contact.address}</div>
             </div>
           </div>
         ))}
