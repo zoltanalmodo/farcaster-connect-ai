@@ -1,4 +1,3 @@
-// ✅ UPDATED: ChatWindow.tsx
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
 
@@ -24,7 +23,11 @@ export default function ChatWindow({
   const chatEndRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    if (!xmtpClient || !signer || !address || !recipient) return;
+    // 🛑 Clear messages if no recipient selected
+    if (!xmtpClient || !signer || !address || !recipient) {
+      setMessages([]);
+      return;
+    }
 
     const loadConversation = async () => {
       const existing = (await xmtpClient.conversations.list()).find(
@@ -37,8 +40,9 @@ export default function ChatWindow({
       const pastMessages: ChatMessage[] = await conversation.messages();
       setMessages(pastMessages);
 
+      // ✅ Save messages scoped to recipient
       sessionStorage.setItem(
-        'chatMessages',
+        `chatMessages-${recipient}`,
         JSON.stringify(pastMessages.map((m) => m.content))
       );
 
@@ -52,7 +56,7 @@ export default function ChatWindow({
           const updated = exists ? prev : [...prev, msg];
 
           sessionStorage.setItem(
-            'chatMessages',
+            `chatMessages-${recipient}`,
             JSON.stringify(updated.map((m) => m.content))
           );
 
