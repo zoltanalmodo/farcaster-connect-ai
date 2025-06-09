@@ -7,6 +7,7 @@ import { walletClientToSigner } from '../lib/walletClientToSigner';
 type Contact = {
   address: string;
   displayName: string;
+  avatar?: string;
 };
 
 type Props = {
@@ -52,8 +53,8 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
         return;
       }
 
-      const existing = contacts.some(c => c.address === identity.walletAddress);
-      if (existing) {
+      const exists = contacts.some(c => c.address === identity.walletAddress);
+      if (exists) {
         setError('Contact already added.');
         return;
       }
@@ -67,7 +68,8 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
 
       const contact: Contact = {
         address: identity.walletAddress,
-        displayName: identity.displayName || input.trim(),
+        displayName: identity.displayName || identity.walletAddress,
+        avatar: identity.avatarUrl, // avatar may be undefined
       };
 
       setContacts(prev => [...prev, contact]);
@@ -75,6 +77,14 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
     } catch (err) {
       console.error('Failed to resolve identity or XMTP check:', err);
       setError('Could not add contact.');
+    }
+  };
+
+  const handleRemove = (address: string) => {
+    const updated = contacts.filter(c => c.address !== address);
+    setContacts(updated);
+    if (selectedAddress === address) {
+      setSelectedAddress(null);
     }
   };
 
@@ -95,10 +105,7 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
           value={input}
           onChange={(e) => setInput(e.target.value)}
         />
-        <button
-          onClick={handleAddContact}
-          className="contacts-add-button"
-        >
+        <button onClick={handleAddContact} className="contacts-add-button">
           Add
         </button>
       </div>
@@ -106,21 +113,37 @@ const ContactsPanel: React.FC<Props> = ({ onSelectContact }) => {
       {error && <p className="text-red-600 mb-2">{error}</p>}
 
       <div className="contacts-list">
-        {contacts.map((contact, idx) => (
+        {contacts.map((contact) => (
           <div
-            key={idx}
-            onClick={() => handleSelect(contact.address)}
+            key={contact.address}
             className={`contacts-card ${selectedAddress === contact.address ? 'selected-contact' : ''}`}
           >
-            <img
-              src="https://placekitten.com/40/40"
-              alt="avatar"
-              className="contacts-avatar"
-            />
-            <div>
+            <div
+              onClick={() => handleSelect(contact.address)}
+              style={{ display: 'flex', alignItems: 'center', flex: 1, cursor: 'pointer' }}
+            >
+              <img
+                src={contact.avatar || `https://robohash.org/${contact.address}?set=set5`}
+                alt="avatar"
+                className="contacts-avatar"
+              />
               <div className="contacts-name">{contact.displayName}</div>
-              <div className="contacts-bio">{contact.address}</div>
             </div>
+            <button
+              onClick={() => handleRemove(contact.address)}
+              style={{
+                background: 'white',
+                border: '1px solid #ccc',
+                borderRadius: '8px',
+                padding: '0.25rem 0.5rem',
+                fontSize: '1.2rem',
+                color: 'red',
+                cursor: 'pointer',
+                marginLeft: 'auto'
+              }}
+            >
+              ❌
+            </button>
           </div>
         ))}
       </div>
