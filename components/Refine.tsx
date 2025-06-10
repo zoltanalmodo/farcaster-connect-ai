@@ -1,33 +1,38 @@
+// components/Refine.tsx
 import { useEffect, useRef, useState } from 'react';
 import { defaultInstruction } from '../lib/defaultInstruction';
+import { useContactData } from '../hooks/useContactData';
 
 export default function Refine({
+  recipient,
   setSuggestions,
   setLoading,
 }: {
+  recipient: string;
   setSuggestions: (val: any) => void;
   setLoading: (val: boolean) => void;
 }) {
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const { contactData, setContactData } = useContactData(recipient);
+
   const [customInstruction, setCustomInstruction] = useState('');
   const [scopeCount, setScopeCount] = useState(5);
   const [useAllMessages, setUseAllMessages] = useState(false);
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const savedInstruction = localStorage.getItem('customInstruction');
+    if (recipient) {
       const savedScope = localStorage.getItem('scopeCount');
       const savedAll = localStorage.getItem('useAllMessages');
 
-      setCustomInstruction(savedInstruction || defaultInstruction);
-      if (!savedInstruction) {
-        localStorage.setItem('customInstruction', defaultInstruction);
+      setCustomInstruction(contactData.customInstruction || defaultInstruction);
+      if (!contactData.customInstruction) {
+        setContactData({ customInstruction: defaultInstruction });
       }
 
       if (savedScope) setScopeCount(Number(savedScope));
       if (savedAll === 'true') setUseAllMessages(true);
     }
-  }, []);
+  }, [recipient]);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -41,7 +46,7 @@ export default function Refine({
       setLoading(true);
       setSuggestions([]);
 
-      const chatMessagesRaw = sessionStorage.getItem('chatMessages');
+      const chatMessagesRaw = sessionStorage.getItem(`chatMessages-${recipient}`);
       const chatMessages = chatMessagesRaw ? JSON.parse(chatMessagesRaw) : [];
 
       const selectedMessages = useAllMessages
@@ -54,8 +59,8 @@ export default function Refine({
         return { sender, text };
       });
 
-      const aboutThem = localStorage.getItem('aboutThem') || '';
-      const myIntentions = localStorage.getItem('myIntentions') || '';
+      const aboutThem = contactData.aboutThem || '';
+      const myIntentions = contactData.myIntentions || '';
 
       const res = await fetch('/api/suggest-agent', {
         method: 'POST',
@@ -86,7 +91,7 @@ export default function Refine({
     return () => {
       document.removeEventListener('fetch-suggestions', fetchSuggestions);
     };
-  }, [customInstruction, scopeCount, useAllMessages]);
+  }, [customInstruction, scopeCount, useAllMessages, contactData]);
 
   return (
     <>
@@ -101,7 +106,7 @@ export default function Refine({
           onChange={(e) => {
             const value = e.target.value;
             setCustomInstruction(value);
-            localStorage.setItem('customInstruction', value);
+            setContactData({ customInstruction: value });
           }}
           placeholder="Edit the AI's behavior..."
           style={{
@@ -176,7 +181,7 @@ export default function Refine({
           className="restore-default-button"
           onClick={() => {
             setCustomInstruction(defaultInstruction);
-            localStorage.setItem('customInstruction', defaultInstruction);
+            setContactData({ customInstruction: defaultInstruction });
           }}
         >
           🔁 Restore to Default

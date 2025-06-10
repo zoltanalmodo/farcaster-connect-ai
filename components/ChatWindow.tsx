@@ -1,10 +1,14 @@
+// components/ChatWindow.tsx
 import { useEffect, useRef, useState } from 'react';
 import { useAccount } from 'wagmi';
+import { useContactData } from '../hooks/useContactData';
+import { appendMessageToHistory } from '../lib/ContactStore';
 
 interface ChatMessage {
   id: string;
   senderAddress: string;
   content: string;
+  sent?: Date; // Optional if not always available
 }
 
 export default function ChatWindow({
@@ -21,9 +25,9 @@ export default function ChatWindow({
   const [message, setMessage] = useState('');
   const [status, setStatus] = useState('');
   const chatEndRef = useRef<HTMLDivElement>(null);
+  const { setContactData } = useContactData(recipient);
 
   useEffect(() => {
-    // 🛑 Clear messages if no recipient selected
     if (!xmtpClient || !signer || !address || !recipient) {
       setMessages([]);
       return;
@@ -40,11 +44,14 @@ export default function ChatWindow({
       const pastMessages: ChatMessage[] = await conversation.messages();
       setMessages(pastMessages);
 
-      // ✅ Save messages scoped to recipient
-      sessionStorage.setItem(
-        `chatMessages-${recipient}`,
-        JSON.stringify(pastMessages.map((m) => m.content))
-      );
+      // ✅ Save to ContactStore as last 50 messages
+      const formatted = pastMessages.map((msg) => ({
+        sender: msg.senderAddress === address ? ('user' as const) : ('them' as const),
+        content: msg.content,
+        timestamp: msg.sent ? new Date(msg.sent).getTime() : Date.now(),
+      }));
+
+      setContactData({ chatHistory: formatted.slice(-50) });
 
       for await (const msg of await conversation.streamMessages()) {
         setMessages((prev) => {
@@ -55,10 +62,12 @@ export default function ChatWindow({
           );
           const updated = exists ? prev : [...prev, msg];
 
-          sessionStorage.setItem(
-            `chatMessages-${recipient}`,
-            JSON.stringify(updated.map((m) => m.content))
-          );
+          // ✅ Append to chat history
+          appendMessageToHistory(recipient, {
+            sender: msg.senderAddress === address ? ('user' as const) : ('them' as const),
+            content: msg.content,
+            timestamp: msg.sent ? new Date(msg.sent).getTime() : Date.now(),
+          });
 
           return updated;
         });
@@ -81,6 +90,12 @@ export default function ChatWindow({
       existing ?? (await xmtpClient.conversations.newConversation(recipient));
 
     await conversation.send(message);
+
+    appendMessageToHistory(recipient, {
+      sender: 'user',
+      content: message,
+      timestamp: Date.now(),
+    });
 
     setMessage('');
     setStatus('✅ Message sent!');

@@ -1,8 +1,10 @@
+// components/Suggestions.tsx
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import Refine from './Refine';
 import ToneControls from './ToneControls';
 import { defaultInstruction } from '../lib/defaultInstruction';
+import { useContactData } from '../hooks/useContactData';
 
 interface Suggestion {
   text: string;
@@ -23,6 +25,7 @@ export default function Suggestions({
   const [showCustom, setShowCustom] = useState(false);
   const [showTonePanel, setShowTonePanel] = useState(false);
   const { address } = useAccount();
+  const { contactData } = useContactData(recipient);
 
   const sendViaXMTP = async (message: string) => {
     try {
@@ -57,7 +60,6 @@ export default function Suggestions({
       return;
     }
 
-    // ✅ Load only messages scoped to selected recipient
     const chatMessagesRaw = sessionStorage.getItem(`chatMessages-${recipient}`);
     const chatMessages = chatMessagesRaw ? JSON.parse(chatMessagesRaw) : [];
 
@@ -74,9 +76,9 @@ export default function Suggestions({
       return { sender, text };
     });
 
-    const aboutThem = localStorage.getItem('aboutThem') || '';
-    const myIntentions = localStorage.getItem('myIntentions') || '';
-    const instruction = localStorage.getItem('customInstruction') || defaultInstruction;
+    const aboutThem = contactData.aboutThem || '';
+    const myIntentions = contactData.myIntentions || '';
+    const instruction = contactData.customInstruction || defaultInstruction;
 
     try {
       const res = await fetch('/api/suggest-agent', {
@@ -153,9 +155,9 @@ export default function Suggestions({
 
       {showCustom ? (
         showTonePanel ? (
-          <ToneControls onDone={() => setShowTonePanel(false)} />
+          <ToneControls recipient={recipient} onDone={() => setShowTonePanel(false)} />
         ) : (
-          <Refine setSuggestions={setSuggestions} setLoading={setLoading} />
+          <Refine recipient={recipient} setSuggestions={setSuggestions} setLoading={setLoading} />
         )
       ) : (
         <div className="suggestion-output" style={{ marginTop: '1rem' }}>

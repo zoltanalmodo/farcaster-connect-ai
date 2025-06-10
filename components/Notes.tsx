@@ -1,53 +1,52 @@
+// components/Notes.tsx
 import { useEffect, useState } from 'react';
+import { useContactData } from '../hooks/useContactData';
 
 interface NotesProps {
   peerAddress: string;
 }
 
 export default function Notes({ peerAddress }: NotesProps) {
-  const [intentions, setIntentions] = useState('');
-  const [personalNotes, setPersonalNotes] = useState('');
+  const { contactData, setContactData } = useContactData(peerAddress);
+  const [aboutThem, setAboutThem] = useState('');
+  const [myIntentions, setMyIntentions] = useState('');
 
-  const storageKey = `notes-${peerAddress}`;
-
+  // Load from ContactStore on mount
   useEffect(() => {
-    if (!peerAddress) return;
+    setAboutThem(contactData.aboutThem || '');
+    setMyIntentions(contactData.myIntentions || '');
+  }, [peerAddress, contactData]);
 
-    const saved = localStorage.getItem(storageKey);
-    if (saved) {
-      const { intentions, personalNotes } = JSON.parse(saved);
-      setIntentions(intentions || '');
-      setPersonalNotes(personalNotes || '');
-    }
-  }, [peerAddress]);
-
+  // Persist to ContactStore whenever notes change
   useEffect(() => {
-    if (!peerAddress) return;
-    localStorage.setItem(storageKey, JSON.stringify({ intentions, personalNotes }));
-  }, [peerAddress, intentions, personalNotes]);
+    setContactData({
+      aboutThem,
+      myIntentions,
+    });
+  }, [aboutThem, myIntentions]);
 
   return (
     <div className="notes-box">
       <div className="notes-title">Notes</div>
 
       <div className="notes-section">
-        <label htmlFor="personalNotes">About Them</label>
+        <label htmlFor="aboutThem">About Them</label>
         <small>Your observations and what they have said/done.</small>
         <textarea
-          id="personalNotes"
-          value={personalNotes}
-          onChange={(e) => setPersonalNotes(e.target.value)}
+          id="aboutThem"
+          value={aboutThem}
+          onChange={(e) => setAboutThem(e.target.value)}
           placeholder="E.g., shared hobbies, behavior, promises, tone..."
         />
       </div>
 
       <div className="notes-section">
-        <label htmlFor="intentions">My Intentions</label>
+        <label htmlFor="myIntentions">My Intentions</label>
         <small>Your perspective and hopes for the relationship.</small>
         <textarea
-          id="intentions"
-          value={intentions}
-          onChange={(e) => setIntentions(e.target.value)}
+          id="myIntentions"
+          value={myIntentions}
+          onChange={(e) => setMyIntentions(e.target.value)}
           placeholder="E.g., friendship, collaboration, keep it light..."
         />
       </div>

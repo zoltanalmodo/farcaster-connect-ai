@@ -1,72 +1,104 @@
-// lib/ContactStore.ts
+// ContactStore.ts
 
-export type ChatMessage = {
-  sender: 'me' | 'them';
-  text: string;
+export type ToneSettings = {
+  warmth: number;
+  formality: number;
+  humor: number;
+  empathy: number;
+  [key: string]: number;
 };
 
-export type ContactProfile = {
-  address: string;
-  displayName?: string;
-  avatar?: string;
-
-  chatHistory?: ChatMessage[];
-  aboutThem?: string;
-  myIntentions?: string;
-  customInstruction?: string;
-
-  aiLearnedInsights?: string[];
-  theySaidAboutMe?: string;
-  selfReflection?: string;
+export type ChatEntry = {
+  sender: 'user' | 'them';
+  content: string;
+  timestamp: number;
 };
 
-const CONTACT_PREFIX = 'cast-compass-contact-';
+export type ContactData = {
+  displayName: string;
+  avatarUrl?: string;
+  aboutThem: string;
+  myIntentions: string;
+  theySaidAboutMe: string;
+  selfReflection: string;
+  customInstruction: string;
+  toneSettings: ToneSettings;
+  aiLearnedInsights: string[];
+  chatHistory: ChatEntry[];
+};
 
-function getStorageKey(address: string) {
-  return `${CONTACT_PREFIX}${address.toLowerCase()}`;
+const STORAGE_KEY = 'castcompass_contacts';
+
+// ✅ Safe localStorage read
+function getAllContacts(): Record<string, ContactData> {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
+    return {};
+  }
+  const raw = localStorage.getItem(STORAGE_KEY);
+  return raw ? JSON.parse(raw) : {};
 }
 
-export const ContactStore = {
-  saveContact(profile: ContactProfile) {
-    if (!profile.address) return;
-    const key = getStorageKey(profile.address);
-    localStorage.setItem(key, JSON.stringify(profile));
-  },
+// ✅ Safe localStorage write
+function saveAllContacts(data: Record<string, ContactData>) {
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
 
-  getContact(address: string): ContactProfile | null {
-    const key = getStorageKey(address);
-    const raw = localStorage.getItem(key);
-    if (!raw) return null;
-    try {
-      return JSON.parse(raw);
-    } catch {
-      console.warn(`Failed to parse contact profile for ${address}`);
-      return null;
-    }
-  },
+// Get a single contact by wallet/address
+export function getContact(address: string): ContactData | null {
+  const all = getAllContacts();
+  return all[address] || null;
+}
 
-  updateContact(address: string, updates: Partial<ContactProfile>) {
-    const current = ContactStore.getContact(address) || { address };
-    const updated = { ...current, ...updates };
-    ContactStore.saveContact(updated);
-  },
+// Create or overwrite a contact completely
+export function setContact(address: string, data: ContactData) {
+  const all = getAllContacts();
+  all[address] = data;
+  saveAllContacts(all);
+}
 
-  deleteContact(address: string) {
-    localStorage.removeItem(getStorageKey(address));
-  },
+// Update specific fields of a contact
+export function updateContact(address: string, updates: Partial<ContactData>) {
+  const all = getAllContacts();
+  const existing = all[address] || createEmptyContact(address);
+  all[address] = { ...existing, ...updates };
+  saveAllContacts(all);
+}
 
-  getAllContacts(): ContactProfile[] {
-    return Object.keys(localStorage)
-      .filter((key) => key.startsWith(CONTACT_PREFIX))
-      .map((key) => {
-        const raw = localStorage.getItem(key);
-        if (!raw) return null;
-        try {
-          return JSON.parse(raw);
-        } catch {
-          return null;
-        }
-      })
-      .filter(Boolean) as ContactProfile[];
-  },
-};
+// Create empty default contact
+export function createEmptyContact(address: string): ContactData {
+  return {
+    displayName: '',
+    avatarUrl: '',
+    aboutThem: '',
+    myIntentions: '',
+    theySaidAboutMe: '',
+    selfReflection: '',
+    customInstruction: '',
+    toneSettings: {
+      warmth: 0.5,
+      formality: 0.5,
+      humor: 0.5,
+      empathy: 0.5,
+    },
+    aiLearnedInsights: [],
+    chatHistory: [],
+  };
+}
+
+// Append a new message to chatHistory, keeping only last 50
+export function appendMessageToHistory(address: string, newMessage: ChatEntry) {
+  const all = getAllContacts();
+  const contact = all[address] || createEmptyContact(address);
+  const updatedHistory = [...(contact.chatHistory || []), newMessage].slice(-50);
+  contact.chatHistory = updatedHistory;
+  all[address] = contact;
+  saveAllContacts(all);
+}
+
+// Optional: remove a contact
+export function deleteContact(address: string) {
+  const all = getAllContacts();
+  delete all[address];
+  saveAllContacts(all);
+}
