@@ -1,37 +1,34 @@
-// components/Refine.tsx
 import { useEffect, useRef, useState } from 'react';
 import { defaultInstruction } from '../lib/defaultInstruction';
 import { useContactData } from '../hooks/useContactData';
 
-export default function Refine({
-  recipient,
-  setSuggestions,
-  setLoading,
-}: {
-  recipient: string;
-  setSuggestions: (val: any) => void;
-  setLoading: (val: boolean) => void;
-}) {
+export default function Refine({ recipient }: { recipient: string }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { contactData, setContactData } = useContactData(recipient);
 
   const [customInstruction, setCustomInstruction] = useState('');
   const [scopeCount, setScopeCount] = useState(5);
   const [useAllMessages, setUseAllMessages] = useState(false);
+  const [numSuggestions, setNumSuggestions] = useState(5);
+
+  const [warmth, setWarmth] = useState(0.5);
+  const [formality, setFormality] = useState(0.5);
+  const [humor, setHumor] = useState(0.5);
+  const [empathy, setEmpathy] = useState(0.5);
 
   useEffect(() => {
-    if (recipient) {
-      const savedScope = localStorage.getItem('scopeCount');
-      const savedAll = localStorage.getItem('useAllMessages');
+    if (!recipient) return;
 
-      setCustomInstruction(contactData.customInstruction || defaultInstruction);
-      if (!contactData.customInstruction) {
-        setContactData({ customInstruction: defaultInstruction });
-      }
+    setCustomInstruction(contactData.customInstruction || defaultInstruction);
+    setScopeCount(contactData.scopeCount ?? 5);
+    setUseAllMessages(contactData.useAllMessages ?? false);
+    setNumSuggestions(contactData.numSuggestions ?? 5);
 
-      if (savedScope) setScopeCount(Number(savedScope));
-      if (savedAll === 'true') setUseAllMessages(true);
-    }
+    const tone = contactData.toneSettings || {};
+    setWarmth(tone.warmth ?? 0.5);
+    setFormality(tone.formality ?? 0.5);
+    setHumor(tone.humor ?? 0.5);
+    setEmpathy(tone.empathy ?? 0.5);
   }, [recipient]);
 
   useEffect(() => {
@@ -41,57 +38,20 @@ export default function Refine({
     }
   }, [customInstruction]);
 
-  useEffect(() => {
-    const fetchSuggestions = async () => {
-      setLoading(true);
-      setSuggestions([]);
-
-      const chatMessagesRaw = sessionStorage.getItem(`chatMessages-${recipient}`);
-      const chatMessages = chatMessagesRaw ? JSON.parse(chatMessagesRaw) : [];
-
-      const selectedMessages = useAllMessages
-        ? chatMessages
-        : chatMessages.slice(-scopeCount);
-
-      const formattedMessages = selectedMessages.map((m: string) => {
-        const sender = m.startsWith('You:') ? 'user' : 'them';
-        const text = m.replace(/^You: |^Them: /, '');
-        return { sender, text };
-      });
-
-      const aboutThem = contactData.aboutThem || '';
-      const myIntentions = contactData.myIntentions || '';
-
-      const res = await fetch('/api/suggest-agent', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          messages: formattedMessages,
-          aboutThem,
-          myIntentions,
-          instruction: customInstruction,
-        }),
-      });
-
-      const data = await res.json();
-      console.log('🧠 API Response:', data);
-
-      const mapped = Array.isArray(data)
-        ? data.map((s: any) => ({
-            text: s.text?.trim() || '',
-            reason: s.explanation?.trim() || 'No explanation provided by AI.',
-          }))
-        : [];
-
-      setSuggestions(mapped);
-      setLoading(false);
-    };
-
-    document.addEventListener('fetch-suggestions', fetchSuggestions);
-    return () => {
-      document.removeEventListener('fetch-suggestions', fetchSuggestions);
-    };
-  }, [customInstruction, scopeCount, useAllMessages, contactData]);
+  const saveAllSettings = () => {
+    setContactData({
+      customInstruction,
+      scopeCount,
+      useAllMessages,
+      numSuggestions,
+      toneSettings: {
+        warmth,
+        formality,
+        humor,
+        empathy,
+      },
+    });
+  };
 
   return (
     <>
@@ -156,9 +116,10 @@ export default function Refine({
               onChange={(e) => {
                 const newVal = Number(e.target.value);
                 setScopeCount(newVal);
-                localStorage.setItem('scopeCount', newVal.toString());
+                setContactData({ scopeCount: newVal });
               }}
               disabled={useAllMessages}
+              style={{ width: '60px', marginLeft: '0.25rem' }}
             />{' '}
             messages
           </label>
@@ -170,21 +131,117 @@ export default function Refine({
               onChange={() => {
                 const newVal = !useAllMessages;
                 setUseAllMessages(newVal);
-                localStorage.setItem('useAllMessages', newVal.toString());
+                setContactData({ useAllMessages: newVal });
               }}
-            />{' '}
+              style={{ marginRight: '0.5rem' }}
+            />
             Use all messages
           </label>
         </div>
 
         <button
           className="restore-default-button"
+          style={{
+            padding: '0.4rem 0.75rem',
+            borderRadius: '8px',
+            backgroundColor: '#f0f0f0',
+            border: '1px solid #aaa',
+            cursor: 'pointer',
+          }}
           onClick={() => {
             setCustomInstruction(defaultInstruction);
             setContactData({ customInstruction: defaultInstruction });
           }}
         >
           🔁 Restore to Default
+        </button>
+      </div>
+
+      <div
+        className="tone-inner-box"
+        style={{
+          marginTop: '2rem',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: '1.25rem',
+        }}
+      >
+        {/* Tone sliders */}
+        {[
+          {
+            label: 'Warmth',
+            value: warmth,
+            set: setWarmth,
+            desc: 'Higher = more affectionate, encouraging, emotionally open.',
+          },
+          {
+            label: 'Formality',
+            value: formality,
+            set: setFormality,
+            desc: 'Higher = more structured, polite, and professional.',
+          },
+          {
+            label: 'Humor',
+            value: humor,
+            set: setHumor,
+            desc: 'Higher = more playful, witty, and lighthearted.',
+          },
+          {
+            label: 'Empathy',
+            value: empathy,
+            set: setEmpathy,
+            desc: 'Higher = more emotionally attuned and supportive responses.',
+          },
+        ].map(({ label, value, set, desc }) => (
+          <div key={label}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+              <label>
+                <strong>{label}</strong>: {value}
+              </label>
+              <input
+                type="range"
+                min="0"
+                max="1"
+                step="0.05"
+                value={value}
+                onChange={(e) => set(parseFloat(e.target.value))}
+              />
+            </div>
+            <div style={{ fontSize: '0.9rem', color: '#444' }}>{desc}</div>
+          </div>
+        ))}
+
+        {/* Number of Answers */}
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+            <label>
+              <strong>Number of Answers</strong>: {numSuggestions}
+            </label>
+            <input
+              type="range"
+              min={3}
+              max={12}
+              step={1}
+              value={numSuggestions}
+              onChange={(e) => setNumSuggestions(parseInt(e.target.value))}
+            />
+          </div>
+          <div style={{ fontSize: '0.9rem', color: '#444' }}>
+            Sets how many distinct responses the AI should generate.
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="suggestion-controls"
+        style={{
+          justifyContent: 'flex-end',
+          marginTop: '1.5rem',
+          display: 'flex',
+        }}
+      >
+        <button className="orange-button" onClick={saveAllSettings}>
+          Done
         </button>
       </div>
     </>

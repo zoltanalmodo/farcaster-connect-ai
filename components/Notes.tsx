@@ -15,7 +15,9 @@ export default function Notes({ peerAddress }: NotesProps) {
   useEffect(() => {
     setAboutThem(contactData.aboutThem || '');
     setMyIntentions(contactData.myIntentions || '');
-  }, [peerAddress, contactData]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peerAddress]);
+
 
   // Persist to ContactStore whenever notes change
   useEffect(() => {

@@ -1,10 +1,15 @@
-// pages/api/suggest-agent.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { openai } from '../../lib/openaiTool'; // Raw OpenAI client
+import { openai } from '../../lib/openaiTool'; // Your raw OpenAI client
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { messages, aboutThem, myIntentions, instruction } = req.body;
+  const {
+    messages,
+    aboutThem,
+    myIntentions,
+    instruction,
+    toneSettings,
+    numSuggestions,
+  } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
     return res.status(400).json({ error: 'Missing or invalid messages array' });
@@ -14,7 +19,19 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Missing or invalid AI instruction' });
   }
 
-  const chatHistory = messages.map((m: any) => `- ${m.sender}: ${m.text}`).join('\n');
+  const chatHistory = messages
+    .map((m: any) => `- ${m.sender}: ${m.text}`)
+    .join('\n');
+
+  // ✅ DEBUG LOGS TO VERIFY TONE SETTINGS + SUGGESTION COUNT
+  console.log('🧠 AI Suggestion Request', {
+    toneSettings,
+    numSuggestions,
+    instruction,
+    aboutThem,
+    myIntentions,
+    messages,
+  });
 
   const userPrompt = `
 Chat history:
@@ -25,12 +42,12 @@ Your intentions: ${myIntentions || 'N/A'}
 `;
 
   const formatRequirement = `
-Respond strictly in this JSON format:
+Respond with exactly ${numSuggestions || 5} distinct message suggestions in this format:
 
 [
   {
-    "text": "Sure! I’ll be there early to help out.",
-    "explanation": "Shows commitment and readiness to support."
+    "text": "Your suggestion here",
+    "explanation": "Why this message works"
   },
   ...
 ]

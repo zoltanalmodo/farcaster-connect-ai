@@ -1,4 +1,4 @@
-// ContactStore.ts
+// lib/ContactStore.ts
 
 export type ToneSettings = {
   warmth: number;
@@ -23,41 +23,37 @@ export type ContactData = {
   selfReflection: string;
   customInstruction: string;
   toneSettings: ToneSettings;
+  scopeCount: number;
+  useAllMessages: boolean;
   aiLearnedInsights: string[];
   chatHistory: ChatEntry[];
+  numSuggestions: number; // ✅ NEW FIELD
 };
 
 const STORAGE_KEY = 'castcompass_contacts';
 
-// ✅ Safe localStorage read
 function getAllContacts(): Record<string, ContactData> {
-  if (typeof window === 'undefined' || typeof localStorage === 'undefined') {
-    return {};
-  }
+  if (typeof window === 'undefined' || typeof localStorage === 'undefined') return {};
   const raw = localStorage.getItem(STORAGE_KEY);
   return raw ? JSON.parse(raw) : {};
 }
 
-// ✅ Safe localStorage write
 function saveAllContacts(data: Record<string, ContactData>) {
   if (typeof window === 'undefined' || typeof localStorage === 'undefined') return;
   localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 }
 
-// Get a single contact by wallet/address
 export function getContact(address: string): ContactData | null {
   const all = getAllContacts();
   return all[address] || null;
 }
 
-// Create or overwrite a contact completely
 export function setContact(address: string, data: ContactData) {
   const all = getAllContacts();
   all[address] = data;
   saveAllContacts(all);
 }
 
-// Update specific fields of a contact
 export function updateContact(address: string, updates: Partial<ContactData>) {
   const all = getAllContacts();
   const existing = all[address] || createEmptyContact(address);
@@ -65,7 +61,6 @@ export function updateContact(address: string, updates: Partial<ContactData>) {
   saveAllContacts(all);
 }
 
-// Create empty default contact
 export function createEmptyContact(address: string): ContactData {
   return {
     displayName: '',
@@ -81,12 +76,14 @@ export function createEmptyContact(address: string): ContactData {
       humor: 0.5,
       empathy: 0.5,
     },
+    scopeCount: 5,
+    useAllMessages: false,
     aiLearnedInsights: [],
     chatHistory: [],
+    numSuggestions: 5, // ✅ default
   };
 }
 
-// Append a new message to chatHistory, keeping only last 50
 export function appendMessageToHistory(address: string, newMessage: ChatEntry) {
   const all = getAllContacts();
   const contact = all[address] || createEmptyContact(address);
@@ -96,7 +93,6 @@ export function appendMessageToHistory(address: string, newMessage: ChatEntry) {
   saveAllContacts(all);
 }
 
-// Optional: remove a contact
 export function deleteContact(address: string) {
   const all = getAllContacts();
   delete all[address];
