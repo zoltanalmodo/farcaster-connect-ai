@@ -119,7 +119,7 @@ export default function Suggestions({
   return (
     <div className={`suggestion-box ${showCustom ? 'purple-box' : 'blue-box'}`}>
       <div className="suggestion-title">
-        {showCustom ? 'Refine AI' : 'AI Suggestions'}
+        {showCustom ? 'Refine AI' : 'AI Message Suggestions'}
       </div>
 
       <div
@@ -139,7 +139,7 @@ export default function Suggestions({
           className="refine-button"
           onClick={() => setShowCustom(!showCustom)}
         >
-          {showCustom ? 'Done' : 'Refine AI'}
+          {showCustom ? 'Done' : 'Refine Messaging AI'}
         </button>
       </div>
 

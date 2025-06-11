@@ -1,3 +1,4 @@
+// Notes.tsx
 import { useEffect, useState } from 'react';
 import { useContactData } from '../hooks/useContactData';
 
@@ -31,12 +32,49 @@ export default function Notes({ peerAddress }: NotesProps) {
     });
   }, [aboutThem, myIntentions, aboutMe, aiObservationsAboutThem, aiObservationsAboutMe]);
 
+  // ✅ Trigger AI observations when Notes panel is opened
+  useEffect(() => {
+    if (!peerAddress || !contactData.chatHistory || contactData.chatHistory.length === 0) return;
+
+    const scope = contactData.useAllMessages
+      ? contactData.chatHistory
+      : contactData.chatHistory.slice(-contactData.scopeCount || 5);
+
+    const runAI = async () => {
+      try {
+        const response = await fetch('/api/analyze-observations', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ messages: scope }),
+        });
+
+        const json = await response.json();
+
+        if (json.aboutThemAI && json.aboutMeAI) {
+          setAiObservationsAboutThem(json.aboutThemAI);
+          setAiObservationsAboutMe(json.aboutMeAI);
+          setContactData({
+            aiObservationsAboutThem: json.aboutThemAI,
+            aiObservationsAboutMe: json.aboutMeAI,
+          });
+        } else {
+          console.warn('AI did not return observations:', json);
+        }
+      } catch (err) {
+        console.error('Error calling AI observations API:', err);
+      }
+    };
+
+    runAI();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [peerAddress]);
+
   return (
     <div className="notes-box">
       <div className="notes-title">Notes</div>
 
       <div className="notes-section">
-        <label htmlFor="aboutThem">About Them</label>
+        <label htmlFor="aboutThem">Observations About Them</label>
         <small>Your observations and what they have said/done.</small>
         <textarea
           id="aboutThem"
@@ -47,7 +85,7 @@ export default function Notes({ peerAddress }: NotesProps) {
       </div>
 
       <div className="notes-section">
-        <label htmlFor="myIntentions">My Intentions</label>
+        <label htmlFor="myIntentions">My Intentions In This Relationship</label>
         <small>Your perspective and hopes for the relationship.</small>
         <textarea
           id="myIntentions"
@@ -58,7 +96,7 @@ export default function Notes({ peerAddress }: NotesProps) {
       </div>
 
       <div className="notes-section">
-        <label htmlFor="aboutMe">About Me In This Relationship</label>
+        <label htmlFor="aboutMe">Observations About Me In This Relationship</label>
         <small>What others or you have observed about yourself in this relationship.</small>
         <textarea
           id="aboutMe"
