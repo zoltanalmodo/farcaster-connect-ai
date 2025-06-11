@@ -1,5 +1,3 @@
-// lib/ContactStore.ts
-
 export type ToneSettings = {
   warmth: number;
   formality: number;
@@ -27,7 +25,10 @@ export type ContactData = {
   useAllMessages: boolean;
   aiLearnedInsights: string[];
   chatHistory: ChatEntry[];
-  numSuggestions: number; // ✅ NEW FIELD
+  numSuggestions: number;
+  aboutMe: string; // ✅ NEW
+  aiObservationsAboutThem: string; // ✅ NEW
+  aiObservationsAboutMe: string; // ✅ NEW
 };
 
 const STORAGE_KEY = 'castcompass_contacts';
@@ -80,7 +81,10 @@ export function createEmptyContact(address: string): ContactData {
     useAllMessages: false,
     aiLearnedInsights: [],
     chatHistory: [],
-    numSuggestions: 5, // ✅ default
+    numSuggestions: 5,
+    aboutMe: '', // ✅ NEW
+    aiObservationsAboutThem: '', // ✅ NEW
+    aiObservationsAboutMe: '', // ✅ NEW
   };
 }
 

@@ -1,5 +1,3 @@
-// useContactData.ts
-
 import { useState, useEffect } from 'react';
 import {
   ContactData,

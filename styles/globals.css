@@ -213,13 +213,15 @@ body {
   background: #eaffea;
   max-width: 600px;
   margin: 1rem auto;
-  height: 450px;
   box-sizing: border-box;
   display: flex;
   flex-direction: column;
   justify-content: flex-start;
   transition: background-color 0.3s ease, border-color 0.3s ease;
+  /* REMOVE fixed height */
+  /* height: 450px; */
 }
+
 
 .notes-section {
   margin-bottom: 1rem;
