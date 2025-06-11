@@ -38,20 +38,18 @@ export default function Refine({ recipient }: { recipient: string }) {
     }
   }, [customInstruction]);
 
-  const saveAllSettings = () => {
+  // Live update tone + count settings
+  useEffect(() => {
     setContactData({
-      customInstruction,
-      scopeCount,
-      useAllMessages,
-      numSuggestions,
       toneSettings: {
         warmth,
         formality,
         humor,
         empathy,
       },
+      numSuggestions,
     });
-  };
+  }, [warmth, formality, humor, empathy, numSuggestions]);
 
   return (
     <>
@@ -230,19 +228,6 @@ export default function Refine({ recipient }: { recipient: string }) {
             Sets how many distinct responses the AI should generate.
           </div>
         </div>
-      </div>
-
-      <div
-        className="suggestion-controls"
-        style={{
-          justifyContent: 'flex-end',
-          marginTop: '1.5rem',
-          display: 'flex',
-        }}
-      >
-        <button className="orange-button" onClick={saveAllSettings}>
-          Done
-        </button>
       </div>
     </>
   );

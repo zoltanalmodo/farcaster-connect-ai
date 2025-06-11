@@ -33,6 +33,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     messages,
   });
 
+  const count = numSuggestions || 5;
+
   const userPrompt = `
 Chat history:
 ${chatHistory}
@@ -42,7 +44,7 @@ Your intentions: ${myIntentions || 'N/A'}
 `;
 
   const formatRequirement = `
-Respond with exactly ${numSuggestions || 5} distinct message suggestions in this format:
+Respond with exactly ${count} distinct message suggestions in this format:
 
 [
   {
@@ -62,7 +64,7 @@ Respond with exactly ${numSuggestions || 5} distinct message suggestions in this
       top_p: 1,
       presence_penalty: 0.6,
       frequency_penalty: 0.4,
-      n: 1,
+      n: 1, // ✅ Always 1 because we expect 1 structured JSON response
       messages: [
         { role: 'system', content: fullPrompt },
         { role: 'user', content: userPrompt },

@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import Refine from './Refine';
 import { defaultInstruction } from '../lib/defaultInstruction';
-import { useContactData } from '../hooks/useContactData';
+import { getContact } from '../lib/ContactStore'; // ✅ Import direct getter for latest data
 
 interface Suggestion {
   text: string;
@@ -22,7 +22,6 @@ export default function Suggestions({
   const [suggestions, setSuggestions] = useState<Suggestion[]>([]);
   const [showCustom, setShowCustom] = useState(false);
   const { address } = useAccount();
-  const { contactData } = useContactData(recipient);
 
   const sendViaXMTP = async (message: string) => {
     try {
@@ -57,9 +56,17 @@ export default function Suggestions({
       return;
     }
 
-    const chatHistory = contactData.chatHistory || [];
-    const useAll = contactData.useAllMessages;
-    const scopeCount = contactData.scopeCount || 5;
+    // ✅ Fetch fresh contact data from localStorage
+    const freshContact = getContact(recipient);
+    if (!freshContact) {
+      alert('No contact data found.');
+      setLoading(false);
+      return;
+    }
+
+    const chatHistory = freshContact.chatHistory || [];
+    const useAll = freshContact.useAllMessages;
+    const scopeCount = freshContact.scopeCount || 5;
 
     const selectedMessages = useAll
       ? chatHistory
@@ -70,11 +77,11 @@ export default function Suggestions({
       text: m.content,
     }));
 
-    const aboutThem = contactData.aboutThem || '';
-    const myIntentions = contactData.myIntentions || '';
-    const instruction = contactData.customInstruction || defaultInstruction;
-    const toneSettings = contactData.toneSettings || {};
-    const numSuggestions = contactData.numSuggestions || 5;
+    const aboutThem = freshContact.aboutThem || '';
+    const myIntentions = freshContact.myIntentions || '';
+    const instruction = freshContact.customInstruction || defaultInstruction;
+    const toneSettings = freshContact.toneSettings || {};
+    const numSuggestions = freshContact.numSuggestions || 5;
 
     try {
       const res = await fetch('/api/suggest-agent', {
