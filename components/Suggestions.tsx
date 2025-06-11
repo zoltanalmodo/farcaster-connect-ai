@@ -1,8 +1,10 @@
+// Suggestions.tsx
+
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import Refine from './Refine';
 import { defaultInstruction } from '../lib/defaultInstruction';
-import { getContact } from '../lib/ContactStore'; // ✅ Import direct getter for latest data
+import { getContact } from '../lib/ContactStore';
 
 interface Suggestion {
   text: string;
