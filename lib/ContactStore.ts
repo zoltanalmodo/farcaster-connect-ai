@@ -26,9 +26,11 @@ export type ContactData = {
   aiLearnedInsights: string[];
   chatHistory: ChatEntry[];
   numSuggestions: number;
-  aboutMe: string; // ✅ NEW
-  aiObservationsAboutThem: string; // ✅ NEW
-  aiObservationsAboutMe: string; // ✅ NEW
+  aboutMe: string; // ✅
+  aiObservationsAboutThem: string; // ✅
+  aiObservationsAboutMe: string; // ✅
+  aiSuggestBehavior: string; // ✅ NEW
+  aiSuggestTone: ToneSettings; // ✅ NEW
 };
 
 const STORAGE_KEY = 'castcompass_contacts';
@@ -82,9 +84,16 @@ export function createEmptyContact(address: string): ContactData {
     aiLearnedInsights: [],
     chatHistory: [],
     numSuggestions: 5,
-    aboutMe: '', // ✅ NEW
-    aiObservationsAboutThem: '', // ✅ NEW
-    aiObservationsAboutMe: '', // ✅ NEW
+    aboutMe: '', // ✅
+    aiObservationsAboutThem: '', // ✅
+    aiObservationsAboutMe: '', // ✅
+    aiSuggestBehavior: '', // ✅ NEW
+    aiSuggestTone: {
+      warmth: 0.5,
+      formality: 0.5,
+      humor: 0.5,
+      empathy: 0.5,
+    }, // ✅ NEW
   };
 }
 

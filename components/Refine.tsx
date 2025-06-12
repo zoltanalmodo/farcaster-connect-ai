@@ -16,6 +16,17 @@ export default function Refine({ recipient }: { recipient: string }) {
   const [humor, setHumor] = useState(0.5);
   const [empathy, setEmpathy] = useState(0.5);
 
+  const [aiSuggestBehavior, setAiSuggestBehavior] = useState('');
+  const [aiSuggestTone, setAiSuggestTone] = useState({
+    warmth: 0.5,
+    formality: 0.5,
+    humor: 0.5,
+    empathy: 0.5,
+  });
+
+  const [applied, setApplied] = useState(false); // ✅ Track apply state
+
+  // ✅ Initial load only
   useEffect(() => {
     if (!recipient) return;
 
@@ -29,8 +40,13 @@ export default function Refine({ recipient }: { recipient: string }) {
     setFormality(tone.formality ?? 0.5);
     setHumor(tone.humor ?? 0.5);
     setEmpathy(tone.empathy ?? 0.5);
+
+    setAiSuggestBehavior(contactData.aiSuggestBehavior || '');
+    setAiSuggestTone(contactData.aiSuggestTone || {});
+    setApplied(false); // reset when switching recipient
   }, [recipient]);
 
+  // ✅ Adjust height of textarea
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto';
@@ -38,7 +54,7 @@ export default function Refine({ recipient }: { recipient: string }) {
     }
   }, [customInstruction]);
 
-  // Live update tone + count settings
+  // ✅ Sync tone + count settings
   useEffect(() => {
     setContactData({
       toneSettings: {
@@ -50,6 +66,14 @@ export default function Refine({ recipient }: { recipient: string }) {
       numSuggestions,
     });
   }, [warmth, formality, humor, empathy, numSuggestions]);
+
+  const applySuggestedTone = () => {
+    setWarmth(aiSuggestTone.warmth ?? 0.5);
+    setFormality(aiSuggestTone.formality ?? 0.5);
+    setHumor(aiSuggestTone.humor ?? 0.5);
+    setEmpathy(aiSuggestTone.empathy ?? 0.5);
+    setApplied(true);
+  };
 
   return (
     <>
@@ -227,6 +251,54 @@ export default function Refine({ recipient }: { recipient: string }) {
           <div style={{ fontSize: '0.9rem', color: '#444' }}>
             Sets how many distinct responses the AI should generate.
           </div>
+        </div>
+      </div>
+
+      {/* 🔍 Refine Suggestions Section */}
+      <div
+        className="tone-inner-box"
+        style={{
+          marginTop: '2rem',
+          backgroundColor: '#f9f9f9',
+          border: '1px dashed #aaa',
+          padding: '1rem',
+          borderRadius: '10px',
+        }}
+      >
+        <h3 style={{ marginTop: 0 }}>🤖 Refine Suggestions</h3>
+
+        <div style={{ marginBottom: '1rem' }}>
+          <strong>Suggest Behavior:</strong>
+          <div style={{ marginTop: '0.5rem', fontStyle: 'italic', color: '#444' }}>
+            {aiSuggestBehavior || 'No behavior suggestions yet.'}
+          </div>
+        </div>
+
+        <div>
+          <strong>Suggest AI Tone Settings:</strong>
+          <ul style={{ marginTop: '0.5rem', color: '#444', lineHeight: 1.6 }}>
+            <li>Warmth: {aiSuggestTone.warmth ?? '–'}</li>
+            <li>Formality: {aiSuggestTone.formality ?? '–'}</li>
+            <li>Humor: {aiSuggestTone.humor ?? '–'}</li>
+            <li>Empathy: {aiSuggestTone.empathy ?? '–'}</li>
+          </ul>
+        </div>
+
+        {/* ✨ Apply Button */}
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '1rem' }}>
+          <button
+            onClick={applySuggestedTone}
+            disabled={applied}
+            className="refine-button"
+            style={{
+              backgroundColor: applied ? '#ccc' : '#a551ff',
+              color: 'white',
+              opacity: applied ? 0.5 : 1,
+              cursor: applied ? 'not-allowed' : 'pointer',
+            }}
+          >
+            ✨ Apply Suggested Settings
+          </button>
         </div>
       </div>
     </>

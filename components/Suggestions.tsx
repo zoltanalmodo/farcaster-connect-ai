@@ -1,10 +1,8 @@
-// Suggestions.tsx
-
 import { useState } from 'react';
 import { useAccount } from 'wagmi';
 import Refine from './Refine';
 import { defaultInstruction } from '../lib/defaultInstruction';
-import { getContact } from '../lib/ContactStore';
+import { getContact, updateContact } from '../lib/ContactStore';
 
 interface Suggestion {
   text: string;
@@ -58,7 +56,6 @@ export default function Suggestions({
       return;
     }
 
-    // ✅ Fetch fresh contact data from localStorage
     const freshContact = getContact(recipient);
     if (!freshContact) {
       alert('No contact data found.');
@@ -116,6 +113,41 @@ export default function Suggestions({
     setLoading(false);
   };
 
+  const triggerRefinement = async () => {
+    const contact = getContact(recipient);
+    if (!contact) return;
+
+    const payload = {
+      aiObservationsAboutThem: contact.aiObservationsAboutThem || '',
+      aiObservationsAboutMe: contact.aiObservationsAboutMe || '',
+    };
+
+    try {
+      const res = await fetch('/api/refine-agent', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      const { suggestedBehavior, suggestedTone } = data;
+
+      updateContact(recipient, {
+        aiSuggestBehavior: suggestedBehavior || '',
+        aiSuggestTone: suggestedTone || {},
+      });
+    } catch (err) {
+      console.error('❌ Failed to refine AI:', err);
+    }
+  };
+
+  const handleToggleRefine = async () => {
+    if (!showCustom && recipient) {
+      await triggerRefinement(); // ✅ Trigger AI suggestions when opening panel
+    }
+    setShowCustom(!showCustom);
+  };
+
   return (
     <div className={`suggestion-box ${showCustom ? 'purple-box' : 'blue-box'}`}>
       <div className="suggestion-title">
@@ -135,10 +167,7 @@ export default function Suggestions({
           </button>
         )}
 
-        <button
-          className="refine-button"
-          onClick={() => setShowCustom(!showCustom)}
-        >
+        <button className="refine-button" onClick={handleToggleRefine}>
           {showCustom ? 'Done' : 'Refine Messaging AI'}
         </button>
       </div>
