@@ -78,7 +78,6 @@ export default function Suggestions({
 
     const aboutThem = freshContact.aboutThem || '';
     const myIntentions = freshContact.myIntentions || '';
-    const instruction = freshContact.customInstruction || defaultInstruction;
     const toneSettings = freshContact.toneSettings || {};
     const numSuggestions = freshContact.numSuggestions || 5;
 
@@ -87,12 +86,13 @@ export default function Suggestions({
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          address,
           messages: formattedMessages,
           aboutThem,
           myIntentions,
-          instruction,
           toneSettings,
           numSuggestions,
+          useAllMessages: useAll,
         }),
       });
 

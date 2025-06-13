@@ -1,3 +1,4 @@
+// lib/server/agentkit.ts
 import { AgentKit } from '@coinbase/agentkit';
 
 let agentKitInstance: AgentKit | null = null;
